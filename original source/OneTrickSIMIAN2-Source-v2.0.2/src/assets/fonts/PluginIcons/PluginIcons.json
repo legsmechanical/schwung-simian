@@ -1,0 +1,29 @@
+{ "props":
+  { "ascent": 1024
+  , "descent": 0
+  , "em": 1024
+  , "encoding": "UnicodeFull"
+  , "lang": "English (US)"
+  , "family": "SimianIcons"
+  , "style": "Regular"
+  , "familyname": "SimianIcons"
+  , "fontname": "SimianIcons-Regular"
+  , "fullname": "SimianIcons Regular"
+  }
+, "glyphs":
+  { "63": { "note":"?", "src": "../../../../../onetrick/src/assets/fonts/OneTrickIcons/Glyphs/Circle.svg", "width": 128 }
+  , "66": { "note":"B", "src": "SimianIcon.svg", "width": 128 }
+  }
+, "sfnt_names":
+  [ ["English (US)", "Copyright", "Copyright (c) 2022 Punk Labs LLC"]
+  , ["English (US)", "Family", "SimianIcons"]
+  , ["English (US)", "SubFamily", "Regular"]
+  , ["English (US)", "UniqueID", "SimianIcons 2022-01-01"]
+  , ["English (US)", "Fullname", "SimianIcons Regular"]
+  , ["English (US)", "Version", "Version 001.000"]
+  , ["English (US)", "PostScriptName", "SimianIcons-Regular"]
+  ]
+, "input": "./Glyphs"
+, "output": [ "PluginIcons.ttf" ]
+, "# vim: set et sw=2 ts=2 sts=2:": false
+}

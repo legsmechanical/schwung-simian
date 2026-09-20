@@ -1,0 +1,81 @@
+[package]
+name = "onetrick_simian2"
+version = "2.0.2"
+edition = "2021"
+authors = ["Punk Labs <contact@punklabs.com>"]
+license = "GPL-3.0-or-later"
+homepage = "https://punklabs.com"
+description = "A Drum Synth inspired by hexagonal 80's classics"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+
+[features]
+default = ["basic", "ui"]
+
+default-boxed = [] # Prevents Stack Overflows in Faust DSP
+
+egui = ["dep:nih_plug_egui", "onetrick/egui"] #, "dep:image" , "dep:egui_extras", "onetrick/egui_extras"
+
+multi_out = []
+
+profile = [] # Extra visuals for profiling performance
+
+# Feature Sets:
+required = ["default-boxed"]
+basic = ["required", "multi_out"]
+ui = ["required", "egui"]
+
+
+[workspace]
+members = ["xtask", "onetrick"]
+
+
+[lib]
+# The `lib` artifact is needed for the standalone target
+crate-type = ["cdylib", "lib"]
+
+
+[patch."https://github.com/RustAudio/baseview.git"]
+# Fixes TextEdit bug where a phantom Alt modifier is held:
+#baseview = { git = "https://github.com/RustAudio/baseview.git?", rev = "998ced845c83002712cb414f97bdb05566b1ff13" }
+# Fixes OpenGL multithreading crash, as well as TextEdit bug above
+baseview = { path = "onetrick/baseview" }
+
+
+[dependencies]
+onetrick = { path = "onetrick" }
+
+# BASICS
+substring = "1.4.5"
+num_enum = "0.7"
+
+# NIH-PLUG
+# Remove the `assert_process_allocs` feature to allow allocations on the audio
+# thread in debug builds.
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", features = ["assert_process_allocs", "standalone"] }
+
+# Uncomment the below line to disable the on-by-default VST3 feature to remove
+# the GPL compatibility requirement
+# nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", default_features = false, features = ["assert_process_allocs"] }
+
+# FAUST
+faust-types = { git = "https://github.com/Frando/rust-faust" }
+default-boxed = "0.2.0"
+
+# GUI
+nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug.git", optional = true }
+
+# NOTE: egui_extras must match nih-plug's egui version!
+#egui_extras = { version = "0.22.2", features = ["image", "svg"], optional = true }
+#image = { version="0.24", optional = true }
+
+[profile.release]
+lto = "thin"
+strip = "symbols"
+
+
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = "none"

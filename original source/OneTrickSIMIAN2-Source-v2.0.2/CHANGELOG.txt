@@ -1,0 +1,112 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.0.2] - 2024-07-05
+
+### Fixed
+
+- Crashing on Linux caused by OpenGL/window multithreading.
+
+## [2.0.1] - 2024-06-20
+
+### Changed
+
+- Saving presets now displays an error on failure.
+
+### Fixed
+
+- Multi-out buses crackling
+- Crash when user preset folder doesn’t exist.
+
+## [2.0.0] - 2024-05-28
+
+This is a complete rewrite that brings new functionality and minimum system requirements. Previous sessions will not be compatible, but it can be installed along side version 1.x.
+
+### Added
+
+- CLAP plugin format
+- Multi-out Buses
+- Preset saving, editing, and tagging
+- Chromatic MIDI Channels
+- Pitch wheel controls decay
+- Mod wheel controls filter cutoff
+- Plugin now saves last state
+- VU meter
+- Fully keyboard navigable
+
+### Changed
+
+- Reverb using Zita-Rev1
+- Reverb Decay renamed to Size
+- Using NIH-plug framework
+- Using Steinberg Audio Unit Wrapper (vst3sdk 3.7.11)
+- Minimum system requirements now include OpenGL 2.0, Windows 10, and macOS 10.13
+- Using Qt Installer Framework for Windows and Linux (QtIFW 4.6.1)
+
+### Fixed
+
+- Tom drums are now mapped correctly according to General MIDI
+
+### Removed
+
+- Voice icon and color controls
+
+
+## [1.1.0] - 2022-11-17
+
+### Changed
+
+- UI refinements to reduce clutter.
+- Alt-clicking Color and Icon buttons now resets to default
+- Refactored to use our new OneTrick shared core.
+- OneTrickIcons font license to SIL Open Font License, Version 1.1
+
+### Fixed
+
+- Panning hard-right causes voice to sleep.
+- Knob label inconsistency for Tone/Noise across voices.
+- Multithread buffer issue causing garbled audio.
+- Increasing memory consumption from flooding the glyph cache.
+
+###	Updated 
+
+- Dplug to version 13.0.5
+
+## [1.0.2] - 2022-20-18
+
+### Changed
+
+- DSP now uses FastMath without hand-editing. This should help with custom builds.
+
+### Optimized
+
+- DSP is now multithreaded with each voice running in parallel.
+
+### Updated
+
+- Dplug to version 12.8.3
+	
+## [1.0.1] - 2022-10-03
+
+### Changed
+
+- Reduced glibc requirement for broader compatibility
+
+### Fixed
+
+- Bitwig faded notes after momentary silence
+- Faded first note after plugin load
+- Dull sound above 48kHz samplerate
+- Potential crash when clicking elements (Dplug 12.7.21)
+
+### Updated
+
+- Dplug to version 12.7.21
+
+## [1.0.0] - 2022-09-20
+
+- Initial Release

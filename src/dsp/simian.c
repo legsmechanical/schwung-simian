@@ -1,1 +1,0 @@
-/* Simian DSP — scaffold. */

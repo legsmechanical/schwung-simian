@@ -1,0 +1,45 @@
+{ "props":
+  { "ascent": 1024
+  , "descent": 0
+  , "em": 128
+  , "encoding": "UnicodeFull"
+  , "lang": "English (US)"
+  , "family": "OneTrickIcons"
+  , "style": "Regular"
+  , "familyname": "OneTrickIcons"
+  , "fontname": "OneTrickIcons-Regular"
+  , "fullname": "OneTrickIcons Regular"
+  }
+, "glyphs":
+  { "63": { "note":"?", "src": "Circle.svg", "width": 128 }
+  , "65": { "note":"A", "src": "Circle.svg", "width": 128 }
+  , "66": { "note":"B", "src": "KickDrum.svg", "width": 128 }
+  , "67": { "note":"C", "src": "SnareDrum.svg", "width": 128 }
+  , "68": { "note":"D", "src": "Claves.svg", "width": 128 }
+  , "69": { "note":"E", "src": "DrumSticks.svg", "width": 128 }
+  , "70": { "note":"F", "src": "TomDrumSmall.svg", "width": 128 }
+  , "71": { "note":"G", "src": "TomDrumMedium.svg", "width": 128 }
+  , "72": { "note":"H", "src": "TomDrumLarge.svg", "width": 128 }
+  , "73": { "note":"I", "src": "Cymbal.svg", "width": 128 }
+  , "74": { "note":"J", "src": "Hihat.svg", "width": 128 }
+  , "75": { "note":"K", "src": "OneTrickIcon.svg", "width": 128 }
+  , "76": { "note":"L", "src": "Upgrade.svg", "width": 128 }
+  , "77": { "note":"M", "src": "LogoBlockerBasic.svg", "width": 128 }
+  , "78": { "note":"N", "src": "LogoBlockerCutout.svg", "width": 128 }
+  , "79": { "note":"O", "src": "LogoBlockerSplatter.svg", "width": 128 }
+  , "80": { "note":"P", "src": "Grunge1.svg", "width": 128 }
+  , "81": { "note":"Q", "src": "Grunge2.svg", "width": 128 }
+  }
+, "sfnt_names":
+  [ ["English (US)", "Copyright", "Copyright (c) 2022 Punk Labs LLC"]
+  , ["English (US)", "Family", "OneTrickIcons"]
+  , ["English (US)", "SubFamily", "Regular"]
+  , ["English (US)", "UniqueID", "OneTrickIcons 2022-01-01"]
+  , ["English (US)", "Fullname", "OneTrickIcons Regular"]
+  , ["English (US)", "Version", "Version 001.000"]
+  , ["English (US)", "PostScriptName", "OneTrickIcons-Regular"]
+  ]
+, "input": "./Glyphs"
+, "output": [ "OneTrickIcons.ttf" ]
+, "# vim: set et sw=2 ts=2 sts=2:": false
+}

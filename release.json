@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
   "download_url": "https://github.com/legsmechanical/schwung-simian/releases/download/v0.1.0/simian-module.tar.gz",
-  "name": "Simian",
-  "description": "TBD"
+  "name": "SIMIAN",
+  "description": "Ten-voice drum synthesiser ported from OneTrick SIMIAN 2 (Punk Labs). No samples: each voice is an oscillator/noise pair under one bending envelope. 35 factory kits, per-voice bus routing and sends."
 }
