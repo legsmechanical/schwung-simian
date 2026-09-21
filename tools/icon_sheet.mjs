@@ -48,25 +48,14 @@ const H = ROWS * (CELL_H + LABEL_H + PAD) + PAD;
 const fb = createFramebuffer(W, H);
 const ctx = drawContext(fb);
 
-/* The pairs come from PADS[] itself, not from a copy: a third table would be
- * a third thing to keep in step, and this sheet exists to be trusted. */
-const wrapper = fs.readFileSync("src/dsp/simian_plugin.cpp", "utf8");
-const padVoices = [...wrapper.matchAll(/\{"pad\d+",\s*"[^"]+",\s*(V_\w+),/g)].map((m) => m[1]);
-if (padVoices.length !== 16) {
-    console.error(`icon_sheet: parsed ${padVoices.length} pads from the wrapper, want 16`);
-    process.exit(1);
-}
-const PARTNER = padVoices.map((v, i) => {
-    const j = padVoices.findIndex((o, k) => k !== i && o === v);
-    return j < 0 ? 0 : j + 1;
-});
-
+/* No pairing table here either: the widget derives the mark from its own
+ * names, so this sheet exercises exactly the path the device takes. */
 for (let i = 0; i < 16; i++) {
     const cx = PAD + (i % COLS) * (CELL_W + PAD);
     const cy = PAD + Math.floor(i / COLS) * (CELL_H + LABEL_H + PAD);
     const cell = frameCtx(ctx, { x: cx, y: cy, w: CELL_W, h: CELL_H });
     overlay.drawCell(cell, {
-        values: { ui_current_voice: i + 1, ui_voice_link: PARTNER[i] },
+        values: { ui_current_voice: i + 1 },
         group: { keys: ["ui_current_voice"] },
     });
 }

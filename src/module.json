@@ -89,10 +89,7 @@
         "max": 16,
         "default": 1,
         "viz": {
-          "kind": "custom:voicelink",
-          "extra_keys": [
-            "ui_voice_link"
-          ]
+          "kind": "custom:voicelink"
         }
       },
       {

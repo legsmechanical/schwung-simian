@@ -28,10 +28,19 @@
  * instead — the page stays correct, and the failure is named in the device's
  * debug.log rather than showing as a hole.
  *
- * THE VALUES. `ui_current_voice` is the cell's own key, 1..16.
- * `ui_voice_link` is declared in the same viz as an extra_key: the wrapper
- * answers the OTHER pad on this voice, 1-based, or 0 for a voice with one
- * pad. One extra read per value rotation, which is why it asks for one.
+ * THE VALUE. `ui_current_voice`, the cell's own key, 1..16. That is the ONLY
+ * read, and the reason is latency: an `extra_keys` value is added to the
+ * controller's value rotation as one extra STOP, so it lands a rotation after
+ * the cell's own value does. The link mark used to come from such a key
+ * (`ui_voice_link`) and visibly trailed the name when you moved pads — Josh,
+ * from the device: "the voice text changes almost instantly, but the link
+ * takes longer to show up".
+ *
+ * Which pads share a voice is fixed at compile time, so it is DERIVED here
+ * instead: a name that appears twice in NAMES[] is a voice with two pads.
+ * Nothing to read, nothing to lag, one less moving part. The derivation is
+ * only sound because two different voices never share a name, which is
+ * exactly what tests/widget.test.mjs already asserts against PADS[].
  *
  * THE BOX IS 32 x 15. render_page_movy hands a single-slot widget
  * { w: cellW, h: lblY - rowY } = 32 x 15, and the context CLIPS to it
@@ -110,6 +119,10 @@ const LINK = [
     "###.###",
 ];
 
+/* Pads whose voice has a second pad. Derived from NAMES[] once at load — see
+ * the latency note at the top. */
+const LINKED = NAMES.map((n) => NAMES.filter((o) => o === n).length > 1);
+
 const ADVANCE = 6, TEXT_H = 8;
 
 /* Rows of "#" compiled to [x, y, w] runs, ONCE at load. Drawing a glyph then
@@ -158,10 +171,11 @@ globalThis.canvas_overlay = {
     /* Exported for tests and for tools/icon_sheet.mjs — the names are the
      * thing most likely to drift from the wrapper's pad table. */
     _names: NAMES,
+    _linked: LINKED,
 
     drawCell(ctx, { values, group }) {
         const idx = Math.round(Number(values[group.keys[0]]) || 1);
-        const linked = Math.round(Number(values["ui_voice_link"]) || 0) > 0;
+        const linked = LINKED[idx - 1];
         const name = NAMES[idx - 1];
         if (!name) return;
 

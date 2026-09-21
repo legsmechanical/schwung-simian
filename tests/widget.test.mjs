@@ -68,15 +68,33 @@ ok(missing.size === 0, `every character in every name has a glyph${missing.size 
 const tooWide = names.filter((n) => n.length * 6 - 1 > 32);
 ok(tooWide.length === 0, `every name fits 32px${tooWide.length ? `: ${tooWide.join(" ")}` : ""}`);
 
-/* The wrapper must serve the extra key the widget reads, or the chain never
- * draws and the page looks finished. */
-ok(/ui_voice_link/.test(wrapper), "the wrapper serves ui_voice_link");
+/* The link mark is DERIVED from NAMES[], not read — an extra_keys value costs
+ * an extra stop in the controller's rotation and the mark visibly trailed the
+ * name on the device. So the derivation has to be right, and the wrapper must
+ * no longer advertise a key nobody reads. */
+const linked = overlay._linked;
+let wrongLink = 0;
+for (let i = 0; i < pads.length; i++) {
+    const shares = pads.some((p, j) => j !== i && p.voice === pads[i].voice);
+    if (shares !== !!linked[i]) {
+        console.log(`        pad ${i + 1} (${names[i]}): shares a voice = ${shares}, ` +
+                    `mark = ${!!linked[i]}`);
+        wrongLink++;
+    }
+}
+ok(wrongLink === 0, "the link mark is derived correctly for every pad");
+/* Matched against CODE, not prose: both files explain in comments why the key
+ * is gone, and a test that greps the whole file fails on its own history. */
+ok(!/strcmp\(key,\s*"ui_voice_link"\)/.test(wrapper),
+   "the wrapper no longer answers ui_voice_link (nothing reads it)");
+ok(!/values\[\s*"ui_voice_link"\s*\]/.test(src),
+   "…and the widget no longer reads it");
 const mj = JSON.parse(fs.readFileSync("src/module.json", "utf8"));
 const voiceParam = mj.capabilities.chain_params.find((p) => p.key === "ui_current_voice");
 ok(voiceParam && voiceParam.viz && voiceParam.viz.kind === "custom:voicelink",
    "module.json declares the custom kind on the Voice knob");
-ok(voiceParam && (voiceParam.viz.extra_keys || []).includes("ui_voice_link"),
-   "…and asks for ui_voice_link as an extra value");
+ok(voiceParam && !voiceParam.viz.extra_keys,
+   "…and declares NO extra_keys, so the mark cannot lag the name");
 
 /* Every icon named must exist, or the cell silently draws nothing. */
 const drawn = new Set();

@@ -200,16 +200,6 @@ static int voice_owner_pad(int v) {
     return 0;
 }
 
-/* The OTHER pad on this pad's voice, or -1 when it has none. This is what
- * makes the sharing visible: the widget on the Voice knob draws a chain link
- * and the partner's number, so "editing this also edits that" is on screen
- * instead of being something you have to know. */
-static int pad_partner(int pad) {
-    for (int q = 0; q < SIMIAN_PADS; q++)
-        if (q != pad && PADS[q].voice == PADS[pad].voice) return q;
-    return -1;
-}
-
 static int note_to_pad(int note) {
     for (int p = 0; p < SIMIAN_PADS; p++) if (PADS[p].note == note) return p;
     return -1;
@@ -624,12 +614,17 @@ static int append_param_json(char *buf, int n, int len, int first,
     return n;
 }
 
-/* The Voice knob draws itself: canvas.js paints the drum's name and, when two
- * pads share one voice, a chain link and the partner's number. Declaring a
- * "custom:" kind is ALSO what makes the host load our canvas.js at all. An
- * unregistered kind does not claim the cell, so a host that has never heard
- * of this draws the plain number — which is what it does today. */
-#define VOICE_VIZ "{\"kind\":\"custom:voicelink\",\"extra_keys\":[\"ui_voice_link\"]}"
+/* The Voice knob draws itself: canvas.js paints the drum's name, and a link
+ * mark when two pads share the voice. Declaring a "custom:" kind is ALSO what
+ * makes the host load our canvas.js at all. An unregistered kind does not
+ * claim the cell, so a host that has never heard of this draws the plain
+ * number — which is what it did before the widget existed.
+ *
+ * ⚠ NO extra_keys. The widget used to read `ui_voice_link` for the pairing,
+ * and an extra key is one extra STOP in the controller's value rotation, so
+ * the mark arrived a rotation after the name and visibly trailed it on the
+ * device. The pairing is compile-time constant, so the widget derives it. */
+#define VOICE_VIZ "{\"kind\":\"custom:voicelink\"}"
 
 static int build_chain_params(char *buf, int len) {
     int n = snprintf(buf, len, "[");
@@ -1024,12 +1019,6 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
         return snprintf(buf, buf_len, "%d", inst->octave_transpose);
     if (strcmp(key, "ui_current_voice") == 0)
         return snprintf(buf, buf_len, "%d", inst->ui_current_voice + 1);
-    /* 1-based partner pad, or 0 for "this voice has one pad". Read by the
-     * custom widget through its viz extra_keys — one extra value stop. */
-    if (strcmp(key, "ui_voice_link") == 0) {
-        int q = pad_partner(inst->ui_current_voice);
-        return snprintf(buf, buf_len, "%d", q < 0 ? 0 : q + 1);
-    }
     /* TEN, not sixteen: the pads are a seating plan, the voices are what can
      * sound at once. */
     if (strcmp(key, "polyphony") == 0) return snprintf(buf, buf_len, "%d", SIMIAN_VOICES);
