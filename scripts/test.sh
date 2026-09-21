@@ -20,3 +20,9 @@ CXX_BIN="${CXX:-c++}"
 "$CXX_BIN" -std=c++14 -O2 -Wall -Wno-comment -Isrc/dsp \
     tests/simian_test.cpp -o build/simian_test -lm
 ./build/simian_test
+
+# The widget lives in JS and the pad table lives in C; only node can compare
+# them. A drift here draws the wrong drum and nothing else notices.
+if command -v node >/dev/null 2>&1; then
+    node tests/widget.test.mjs
+fi

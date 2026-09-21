@@ -200,6 +200,16 @@ static int voice_owner_pad(int v) {
     return 0;
 }
 
+/* The OTHER pad on this pad's voice, or -1 when it has none. This is what
+ * makes the sharing visible: the widget on the Voice knob draws a chain link
+ * and the partner's number, so "editing this also edits that" is on screen
+ * instead of being something you have to know. */
+static int pad_partner(int pad) {
+    for (int q = 0; q < SIMIAN_PADS; q++)
+        if (q != pad && PADS[q].voice == PADS[pad].voice) return q;
+    return -1;
+}
+
 static int note_to_pad(int note) {
     for (int p = 0; p < SIMIAN_PADS; p++) if (PADS[p].note == note) return p;
     return -1;
@@ -307,10 +317,16 @@ static const vparam_def_t PAD_PARAMS[] = {
  * it needs a chain_params entry: without one the host guesses its type and
  * range, and a mis-guessed range is a PAD knob that cannot reach pad 16. */
 static const gparam_def_t UI_PARAMS[] = {
-    /* 16, not SIMIAN_PADS: the generators parse this table with a regex that
+    /* ⚠ It indexes PADS[], 1..16 — but it is called "voice" because that is
+     * what the player is choosing: which DRUM to edit. Two pads can be the
+     * same drum, and calling this "Pad" made them read as separate
+     * instruments when every control but Tune is shared. The name is the
+     * player's word; the index is a pad ordinal. (Josh, 2026-09-21.)
+     *
+     * 16, not SIMIAN_PADS: the generators parse this table with a regex that
      * only reads numeric literals, and a named constant makes the row
      * invisible to them. */
-    {"ui_current_pad", "Pad", NULL, 1, 16, 1, NULL},
+    {"ui_current_voice", "Voice", NULL, 1, 16, 1, NULL},
 };
 #define UI_COUNT ((int)(sizeof(UI_PARAMS) / sizeof(UI_PARAMS[0])))
 
@@ -389,7 +405,7 @@ typedef struct {
     char        module_dir[512];
 
     /* Focus following — see the live-press block in v2_set_param. */
-    int         ui_current_pad;      /* 0-based here, 1-based on the wire */
+    int         ui_current_voice;    /* a PAD index, 0-based; 1-based on the wire */
     int         ui_auto_select;
     int         live_armed;
     long        live_arm_block;
@@ -533,7 +549,7 @@ static void load_defaults(simian_t *inst) {
  * ======================================================================== */
 #define CHILD_COMMON \
     "\"child_prefix\":\"pad\",\"child_count\":16,\"child_index_base\":1," \
-    "\"child_label\":\"Pad\",\"child_index_param\":\"ui_current_pad\"," \
+    "\"child_label\":\"Voice\",\"child_index_param\":\"ui_current_voice\"," \
     "\"child_names\":[\"Kick\",\"Rim\",\"Snare\",\"Snare 2\",\"Clap\",\"Lo Tom\"," \
                      "\"HH Cl\",\"HH Cl 2\",\"Hi Tom\",\"Lo Tom 2\",\"HH Open\"," \
                      "\"Mid Tom\",\"Hi Tom 2\",\"Cymbal\",\"Cymbal 2\",\"Mid Tom2\"]," \
@@ -543,7 +559,7 @@ static void load_defaults(simian_t *inst) {
     "\"child_copy_keys\":[\"tune\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"cutoff\",\"res\"," \
         "\"lp_bend\",\"lp_dyn\",\"decay\",\"punch\",\"noise\",\"click\",\"volume\"," \
         "\"pan\",\"vel_vol\",\"sat\",\"reverb\",\"send_a\",\"send_b\"]," \
-    "\"child_key_overrides\":{\"ui_current_pad\":\"ui_current_pad\"},"
+    "\"child_key_overrides\":{\"ui_current_voice\":\"ui_current_voice\"},"
 
 static const char *kUiHierarchy =
 "{\"pad_layout\":\"drums\",\"levels\":{"
@@ -565,8 +581,8 @@ static const char *kUiHierarchy =
    /* The note map lives here and nowhere else. */
    "\"child_notes\":[36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51],"
    "\"child_press_param\":\"ui_live_press\",\"child_press_note_param\":\"ui_live_note\","
-   "\"knobs\":[\"ui_current_pad\",\"tune\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"decay\",\"punch\"],"
-   "\"params\":[\"ui_current_pad\",\"tune\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"decay\",\"punch\"]},"
+   "\"knobs\":[\"ui_current_voice\",\"tune\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"decay\",\"punch\"],"
+   "\"params\":[\"ui_current_voice\",\"tune\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"decay\",\"punch\"]},"
  "\"pad_noise\":{\"name\":\"Noise\"," CHILD_COMMON
    "\"knobs\":[\"cutoff\",\"res\",\"lp_bend\",\"lp_dyn\",\"noise\",\"click\"],"
    "\"params\":[\"cutoff\",\"res\",\"lp_bend\",\"lp_dyn\",\"noise\",\"click\"]},"
@@ -593,7 +609,8 @@ static const char *kUiHierarchy =
  * voice parameter costs ten entries — count before adding the 20th. */
 static int append_param_json(char *buf, int n, int len, int first,
                              const char *key, const char *name,
-                             float mn, float mx, float def, const char *unit) {
+                             float mn, float mx, float def, const char *unit,
+                             const char *viz) {
     /* Integer steps: every range here is coarse enough to sweep with an
      * encoder, and params.lib's 0.01 steps exist for a mouse. `max` is
      * declared on percent params deliberately — without it the shared
@@ -602,20 +619,31 @@ static int append_param_json(char *buf, int n, int len, int first,
         "%s{\"key\":\"%s\",\"name\":\"%s\",\"type\":\"int\",\"min\":%d,\"max\":%d,\"default\":%d",
         first ? "" : ",", key, name, (int)mn, (int)mx, (int)def);
     if (unit) n += snprintf(buf + n, len - n, ",\"unit\":\"%s\"", unit);
+    if (viz)  n += snprintf(buf + n, len - n, ",\"viz\":%s", viz);
     n += snprintf(buf + n, len - n, "}");
     return n;
 }
+
+/* The Voice knob draws itself: canvas.js paints the drum's name and, when two
+ * pads share one voice, a chain link and the partner's number. Declaring a
+ * "custom:" kind is ALSO what makes the host load our canvas.js at all. An
+ * unregistered kind does not claim the cell, so a host that has never heard
+ * of this draws the plain number — which is what it does today. */
+#define VOICE_VIZ "{\"kind\":\"custom:voicelink\",\"extra_keys\":[\"ui_voice_link\"]}"
 
 static int build_chain_params(char *buf, int len) {
     int n = snprintf(buf, len, "[");
     int first = 1;
     for (int i = 0; i < GP_COUNT && n < len - 256; i++, first = 0) {
         const gparam_def_t *p = &GLOBAL_PARAMS[i];
-        n = append_param_json(buf, n, len, first, p->key, p->name, p->min, p->max, p->def, p->unit);
+        n = append_param_json(buf, n, len, first, p->key, p->name, p->min, p->max,
+                              p->def, p->unit, NULL);
     }
     for (int i = 0; i < UI_COUNT && n < len - 256; i++, first = 0) {
         const gparam_def_t *p = &UI_PARAMS[i];
-        n = append_param_json(buf, n, len, first, p->key, p->name, p->min, p->max, p->def, p->unit);
+        n = append_param_json(buf, n, len, first, p->key, p->name, p->min, p->max,
+                              p->def, p->unit,
+                              strcmp(p->key, "ui_current_voice") == 0 ? VOICE_VIZ : NULL);
     }
     char key[80], name[80];
     /* Tune is per PAD, so all sixteen are listed, each with its own default. */
@@ -625,7 +653,7 @@ static int build_chain_params(char *buf, int len) {
             snprintf(key, sizeof(key), "%s_%s", PADS[d].id, p->key);
             snprintf(name, sizeof(name), "%s %s", PADS[d].label, p->name);
             n = append_param_json(buf, n, len, first, key, name, p->min, p->max,
-                                  PADS[d].tune, p->unit);
+                                  PADS[d].tune, p->unit, NULL);
         }
     /* Everything else is per VOICE, and an alias addresses the same parameter
      * as its parent — so it is listed ONCE, under the pad that owns the voice.
@@ -637,7 +665,8 @@ static int build_chain_params(char *buf, int len) {
             const vparam_def_t *p = &VOICE_PARAMS[i];
             snprintf(key, sizeof(key), "%s_%s", PADS[owner].id, p->key);
             snprintf(name, sizeof(name), "%s %s", VOICES[v].label, p->name);
-            n = append_param_json(buf, n, len, first, key, name, p->min, p->max, p->def, p->unit);
+            n = append_param_json(buf, n, len, first, key, name, p->min, p->max,
+                                  p->def, p->unit, NULL);
         }
     }
     n += snprintf(buf + n, len - n, "]");
@@ -678,8 +707,8 @@ static int json_get_number(const char *json, const char *key, float *out) {
  * parameters ONCE under the pad that owns it. Writing an alias's copy too
  * would double the blob and make "which one wins on restore" a question. */
 static int build_state(simian_t *inst, char *buf, int buf_len) {
-    int n = snprintf(buf, buf_len, "{\"preset\":%d,\"octave_transpose\":%d,\"ui_current_pad\":%d",
-                     inst->cur_preset, inst->octave_transpose, inst->ui_current_pad + 1);
+    int n = snprintf(buf, buf_len, "{\"preset\":%d,\"octave_transpose\":%d,\"ui_current_voice\":%d",
+                     inst->cur_preset, inst->octave_transpose, inst->ui_current_voice + 1);
     for (int g = 0; g < GP_COUNT && n < buf_len - 64; g++)
         n += snprintf(buf + n, buf_len - n, ",\"%s\":%.4f", GLOBAL_PARAMS[g].key, inst->gvalue[g]);
     for (int d = 0; d < SIMIAN_PADS && n < buf_len - 64; d++)
@@ -702,9 +731,9 @@ static void restore_state(simian_t *inst, const char *json) {
         else inst->cur_preset = -1;
     }
     if (json_get_number(json, "octave_transpose", &f) == 0) inst->octave_transpose = (int)f;
-    if (json_get_number(json, "ui_current_pad", &f) == 0) {
+    if (json_get_number(json, "ui_current_voice", &f) == 0) {
         int d = (int)f - 1;
-        if (d >= 0 && d < SIMIAN_PADS) inst->ui_current_pad = d;
+        if (d >= 0 && d < SIMIAN_PADS) inst->ui_current_voice = d;
     }
     /* After the preset, so a value edited since the kit was picked wins — the
      * slot keeps the sound it was saved with. */
@@ -749,7 +778,7 @@ static void *v2_create_instance(const char *module_dir, const char *json_default
     if (!inst) return NULL;
     inst->cur_preset = -1;
     inst->octave_transpose = 0;
-    inst->ui_current_pad = 0;
+    inst->ui_current_voice = 0;
     inst->ui_auto_select = 1;
     inst->live_armed = 0;
     inst->live_arm_block = 0;
@@ -811,12 +840,12 @@ static void note_hit_focus(simian_t *inst, int pad) {
     inst->last_hit_block = inst->block;
     if (!inst->ui_auto_select) return;
     if (!transport_running() && !host_vouches(inst)) {
-        inst->ui_current_pad = pad;
+        inst->ui_current_voice = pad;
         inst->live_armed = 0;
         inst->last_hit_pad = -1;
     } else if (inst->live_armed &&
                (inst->block - inst->live_arm_block) <= SIMIAN_LIVE_MATCH_BLOCKS) {
-        inst->ui_current_pad = pad;
+        inst->ui_current_voice = pad;
         inst->live_armed = 0;
         inst->last_hit_pad = -1;   /* consumed: one note vouches for one press */
     }
@@ -903,9 +932,9 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         if (idx >= 0 && idx < preset_count() && idx != inst->cur_preset) load_preset(inst, idx);
         return;
     }
-    if (strcmp(key, "ui_current_pad") == 0) {
+    if (strcmp(key, "ui_current_voice") == 0) {
         int d = atoi(val) - 1;                       /* 1-based on the wire */
-        inst->ui_current_pad = (d < 0) ? 0 : (d >= SIMIAN_PADS ? SIMIAN_PADS - 1 : d);
+        inst->ui_current_voice = (d < 0) ? 0 : (d >= SIMIAN_PADS ? SIMIAN_PADS - 1 : d);
         return;
     }
     if (strcmp(key, "ui_auto_select") == 0) { inst->ui_auto_select = atoi(val) != 0; return; }
@@ -922,7 +951,7 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         if (n < 0 || n > 127) return;
         int pad = note_to_pad(n);
         if (pad < 0) return;                         /* unmapped: not our note */
-        inst->ui_current_pad = pad;
+        inst->ui_current_voice = pad;
         /* Consume any vouch in flight, so it cannot later credit a SEQUENCED
          * note over the authoritative answer we just took. */
         inst->live_armed = 0;
@@ -941,7 +970,7 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         if (!inst->ui_auto_select) return;
         if (inst->last_hit_pad >= 0 &&
             (inst->block - inst->last_hit_block) <= SIMIAN_LIVE_MATCH_BLOCKS) {
-            inst->ui_current_pad = inst->last_hit_pad;
+            inst->ui_current_voice = inst->last_hit_pad;
             inst->live_armed = 0;
             inst->last_hit_pad = -1;
         } else {
@@ -962,7 +991,7 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
     if (!bare) {
         /* A bare key addresses the FOCUSED pad, which is how a child level's
          * knobs arrive when a consumer has not expanded the template. */
-        pad = inst->ui_current_pad;
+        pad = inst->ui_current_voice;
         bare = key;
     }
     int pi = find_pad_param(bare);
@@ -993,8 +1022,14 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
     }
     if (strcmp(key, "octave_transpose") == 0)
         return snprintf(buf, buf_len, "%d", inst->octave_transpose);
-    if (strcmp(key, "ui_current_pad") == 0)
-        return snprintf(buf, buf_len, "%d", inst->ui_current_pad + 1);
+    if (strcmp(key, "ui_current_voice") == 0)
+        return snprintf(buf, buf_len, "%d", inst->ui_current_voice + 1);
+    /* 1-based partner pad, or 0 for "this voice has one pad". Read by the
+     * custom widget through its viz extra_keys — one extra value stop. */
+    if (strcmp(key, "ui_voice_link") == 0) {
+        int q = pad_partner(inst->ui_current_voice);
+        return snprintf(buf, buf_len, "%d", q < 0 ? 0 : q + 1);
+    }
     /* TEN, not sixteen: the pads are a seating plan, the voices are what can
      * sound at once. */
     if (strcmp(key, "polyphony") == 0) return snprintf(buf, buf_len, "%d", SIMIAN_VOICES);
@@ -1004,7 +1039,7 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
 
     int pad = -1;
     const char *bare = split_pad_key(key, &pad);
-    if (!bare) { pad = inst->ui_current_pad; bare = key; }
+    if (!bare) { pad = inst->ui_current_voice; bare = key; }
     int pi = find_pad_param(bare);
     if (pi >= 0) return snprintf(buf, buf_len, "%.3f", inst->pad_tune[pad]);
     pi = find_voice_param(bare);

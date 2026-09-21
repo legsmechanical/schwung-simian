@@ -210,8 +210,8 @@ int main(void) {
     api->set_param(inst, "pad4_tune", "999");
     ok(get(api, inst, "pad4_tune") == "24.000", "tune is clamped to its declared range");
 
-    api->set_param(inst, "ui_current_pad", "12");
-    ok(get(api, inst, "ui_current_pad") == "12", "focus is 1-based on the wire");
+    api->set_param(inst, "ui_current_voice", "12");
+    ok(get(api, inst, "ui_current_voice") == "12", "focus is 1-based on the wire");
     api->set_param(inst, "punch", "44");
     ok(get(api, inst, "pad12_punch") == "44.000", "a bare key edits the FOCUSED pad");
     api->set_param(inst, "tune", "3");
@@ -254,7 +254,7 @@ int main(void) {
         ok(get(api, b, "pad8_cutoff") == "1234.000", "…visible from the alias too");
         ok(get(api, b, "pad15_tune") == "-9.000", "state restores a pad tune");
         ok(get(api, b, "gain") == "-12.000", "state restores a global");
-        ok(get(api, b, "ui_current_pad") == "12", "state restores the focused pad");
+        ok(get(api, b, "ui_current_voice") == "12", "state restores the focused pad");
         api->destroy_instance(b);
     }
 
@@ -348,7 +348,7 @@ int main(void) {
                 size_t r = arr.find('"', q + 1);
                 std::string k = arr.substr(q + 1, r - q - 1);
                 q = r + 1;
-                if (k.empty() || k == "ui_current_pad") continue;
+                if (k.empty() || k == "ui_current_voice") continue;
                 if (find_voice_param(k.c_str()) < 0 && find_global_param(k.c_str()) < 0 &&
                     find_pad_param(k.c_str()) < 0) {
                     printf("        knob with no param: %s\n", k.c_str());
@@ -544,35 +544,35 @@ int main(void) {
         void *f = api->create_instance(".", NULL);
         simian_t *F = (simian_t *)f;
         note_on(api, f, 38, 100);
-        ok(F->ui_current_pad == note_to_pad(38), "with no vouching host, a bare note moves focus");
+        ok(F->ui_current_voice == note_to_pad(38), "with no vouching host, a bare note moves focus");
 
         /* An alias must focus ITS OWN pad, not its parent's — otherwise its
          * Tune knob is unreachable from the grid. */
         note_on(api, f, 39, 100);
-        ok(F->ui_current_pad == note_to_pad(39), "an alias pad focuses itself, not its parent");
+        ok(F->ui_current_voice == note_to_pad(39), "an alias pad focuses itself, not its parent");
 
-        F->ui_current_pad = 0;
+        F->ui_current_voice = 0;
         api->set_param(f, "ui_live_press", "1");
         note_on(api, f, 49, 100);
-        ok(F->ui_current_pad == note_to_pad(49), "an early vouch is claimed by the next note");
+        ok(F->ui_current_voice == note_to_pad(49), "an early vouch is claimed by the next note");
 
         note_on(api, f, 42, 100);
-        ok(F->ui_current_pad == note_to_pad(49),
+        ok(F->ui_current_voice == note_to_pad(49),
            "a bare note alone does not move focus once a host vouches");
         api->set_param(f, "ui_live_press", "1");
-        ok(F->ui_current_pad == note_to_pad(42), "a late vouch matches the note just played");
+        ok(F->ui_current_voice == note_to_pad(42), "a late vouch matches the note just played");
 
-        F->ui_current_pad = 0;
+        F->ui_current_voice = 0;
         api->set_param(f, "ui_live_note", "41");
-        ok(F->ui_current_pad == note_to_pad(41), "ui_live_note names the pad outright");
+        ok(F->ui_current_voice == note_to_pad(41), "ui_live_note names the pad outright");
         api->set_param(f, "ui_live_note", "60");
-        ok(F->ui_current_pad == note_to_pad(41), "an unmapped ui_live_note moves nothing");
+        ok(F->ui_current_voice == note_to_pad(41), "an unmapped ui_live_note moves nothing");
 
         /* ⚠ DR32's bug, tested so it cannot come back. */
-        F->ui_current_pad = 0;
+        F->ui_current_voice = 0;
         F->block += SIMIAN_VOUCH_TTL_BLOCKS + 1;
         note_on(api, f, 40, 100);
-        ok(F->ui_current_pad == note_to_pad(40),
+        ok(F->ui_current_voice == note_to_pad(40),
            "a host that has gone quiet stops suppressing bare-note follow");
 
         api->destroy_instance(f);

@@ -84,10 +84,16 @@ if (voiceLabels.length !== 10) {
 const VOICE_ORDER = ["V_KICK", "V_RIM", "V_SNARE", "V_CLAP", "V_LOWTOM",
                      "V_HHCLOSED", "V_MIDTOM", "V_HHOPEN", "V_HITOM", "V_CYMBAL"];
 
+/* Mirrors VOICE_VIZ in the wrapper. The Voice knob is drawn by src/canvas.js
+ * (an icon of the drum, plus a chain when two pads share the voice), and
+ * declaring a "custom:" kind is also what makes the host load that file. */
+const VOICE_VIZ = { kind: "custom:voicelink", extra_keys: ["ui_voice_link"] };
+
 const entry = (key, name, p, def = p.def) => {
   const o = { key, name, type: "int", min: Math.trunc(p.min), max: Math.trunc(p.max),
               default: Math.trunc(def) };
   if (p.unit) o.unit = p.unit;
+  if (key === "ui_current_voice") o.viz = VOICE_VIZ;
   return o;
 };
 

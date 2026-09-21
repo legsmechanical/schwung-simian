@@ -66,6 +66,10 @@ echo "Packaging..."
 cat src/module.json > "dist/$ID/module.json"
 [ -f src/help.json ] && cat src/help.json > "dist/$ID/help.json"
 cat src/ui.js > "dist/$ID/ui.js"
+# The custom Voice widget. The host loads this because chain_params declares a
+# "custom:" viz kind; without the file the kind never registers and the cell
+# falls back to a plain number — correct, but not the picture.
+cat src/canvas.js > "dist/$ID/canvas.js"
 cat build/dsp.so > "dist/$ID/dsp.so"
 chmod +x "dist/$ID/dsp.so"
 
