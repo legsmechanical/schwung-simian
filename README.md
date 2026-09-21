@@ -18,45 +18,35 @@ its knobs, which is why a kit here is 190 numbers and no audio files.
 
 ### The pads
 
-Ten voices on the drum grid, in note order. The octave shift moves the whole
-row.
+Sixteen pads, notes 36–51, laid out the way Move's own drum racks are. Ten
+voices, so six pads are **aliases**: a second pad on a voice another pad
+already owns, at its own pitch offset.
 
-| Pad | Voice | | Pad | Voice |
-|---|---|---|---|---|
-| **36** | Kick     | | **42** | HH Closed |
-| **37** | Rimshot  | | **45** | Mid Tom   |
-| **38** | Snare    | | **46** | HH Open   |
-| **39** | Clap     | | **48** | High Tom  |
-| **41** | Low Tom  | | **49** | Cymbal    |
+```
+ 48 HI TOM *   49 CYMBAL     50 CYMBAL *   51 MID TOM *
+ 44 HI TOM     45 LOW TOM *  46 HH OPEN    47 MID TOM
+ 40 CLAP       41 LOW TOM    42 HH CL      43 HH CL *
+ 36 KICK       37 RIM        38 SNARE      39 SNARE *
+```
 
-Upstream's alias notes still work, and a sequencer that writes General MIDI
-lands on the right drum: 35 is the kick, 40 the snare, 43 the low tom, 47 the
-mid tom, 50 the high tom. An alias plays the voice **transposed** by the
-distance from its home note, which is upstream's chromatic behaviour.
+`*` marks an alias. Each one sits **next to its parent**, and each carries its
+own **Tune** — that offset is the only thing an alias owns, and it is what
+stops a second pad being a duplicate. Everything else is the voice's and is
+shared: turning Snare 2's Decay turns the Snare's, because there is one snare.
 
-**Two notes play nothing and silence something:** 44 (pedal hihat) chokes both
-hats, 51 (ride) chokes the cymbal. The closed hat chokes the open one, as on
-any kit.
+Snare and all three toms get the one alias upstream gives them. The two extra
+are on HH Closed and Cymbal, which is what upstream's two silent notes already
+meant — 44 is a pedal hat, 51 a ride. Here every pad sounds, as it does in
+Move's kits.
 
-### Knobs and pages
+**Chokes follow Move, not GM.** The three hats (42 · 43 · 46) silence each
+other; so do the cymbals. A pad never chokes its own voice — a second hit on
+one DSP already restarts it.
 
-| Page | |
-|---|---|
-| **Kit** | the 35 factory kits |
-| **Tone** | Voice · Pitch · Wave · Bend · Bend Dyn · Decay · Punch · Tone/Nse |
-| **Noise** | Cutoff · Res · LP Bend · LP Dyn · Click |
-| **Mix** | Volume · Pan · Vel Vol · Sat · Reverb · Send A · Send B |
-| **Master** | Gain · Drive · Sat · Rev Size · Rev Gate · Vel Sens · Transpose |
-
-Tone, Noise and Mix are three views of **one** voice — the **Voice** knob on
-Tone moves all three, and the focus follows a pad you hit.
-
-**Wave** is a morph, not a switch: at 0 it is a filtered triangle, at 100 a
-sampled cymbal played back at pitch, and everything between is a crossfade.
-**Bend** and **LP Bend** are how far the envelope drags pitch and cutoff, in
-semitones; the **Dyn** beside each is how much of that bend velocity controls.
-**Tone/Nse** crossfades the oscillator against the noise source — a kick is
-near 0, a snare near the middle, a hat near 100.
+⚠ **These are not General MIDI notes.** Move's layout is not GM's — Move puts
+cymbals at 48–51 where GM puts toms, and a clap at 39 where GM puts one but
+upstream does not. Seating the aliases next to their parents moves things
+further still. An imported GM drum loop will play the wrong drums.
 
 ### Performance controls
 
@@ -69,8 +59,10 @@ near 0, a snare near the middle, a hat near 100.
 
 ## Routing
 
-Every voice is published to the host (`split_voices`), so each can go to its
-own bus, and each carries **Send A / Send B** into the host's return buses.
+All ten voices are published to the host (`split_voices`), so each can go to
+its own bus, and each carries **Send A / Send B** into the host's return
+buses. The ids are the pads that OWN each voice — an alias has no audio path
+of its own, so both pads of a pair ride one bus.
 
 ⚠ **A voice routed to a bus leaves pre-master.** It keeps its own Volume, Pan
 and Saturation, but not the global Drive, Saturation, limiter or Gain — those
@@ -123,6 +115,11 @@ nih-plug host:
 - **Volume's floor is −60 dB**, not upstream's −100: below that the knob is
   scrolling through inaudible.
 - **A silent voice stops being computed** after 100 ms, as upstream does.
+- **Pads are seated, not inherited.** Upstream routes General MIDI, which on a
+  16-pad grid means four duplicate pads two slots from their parents and two
+  dead ones. Here sixteen pads are declared explicitly, every alias touches
+  its parent, and each owns a Tune. The cost is GM compatibility — see the
+  warning under *The pads*.
 
 ## Licence
 

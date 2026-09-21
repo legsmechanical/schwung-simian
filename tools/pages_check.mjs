@@ -48,10 +48,17 @@ if (padLayoutOf(hierarchy) !== "drums") bad(`pad_layout resolves to ${padLayoutO
 
 /* 🔴 The count is the check that catches a note map declared on a second
  * level: voicesOf emits a voice per child of EVERY level that declares one, so
- * three copies of a ten-voice rack render perfectly and publish thirty. */
+ * three copies of the rack render perfectly and publish forty-eight.
+ *
+ * SIXTEEN here, not ten: these are PADS. Six of them are aliases sharing a
+ * voice with a neighbour, which the host cannot know and does not need to —
+ * it seats what plays a note. The ten real DSP voices are published
+ * separately through split_voices. */
 const WANT = [
-    ["Kick", 36], ["Rimshot", 37], ["Snare", 38], ["Clap", 39], ["Low Tom", 41],
-    ["HH Closed", 42], ["Mid Tom", 45], ["HH Open", 46], ["High Tom", 48], ["Cymbal", 49],
+    ["Kick", 36], ["Rim", 37], ["Snare", 38], ["Snare 2", 39],
+    ["Clap", 40], ["Lo Tom", 41], ["HH Cl", 42], ["HH Cl 2", 43],
+    ["Hi Tom", 44], ["Lo Tom 2", 45], ["HH Open", 46], ["Mid Tom", 47],
+    ["Hi Tom 2", 48], ["Cymbal", 49], ["Cymbal 2", 50], ["Mid Tom2", 51],
 ];
 const voices = voicesOf(hierarchy);
 if (voices.length !== WANT.length) bad(`${voices.length} voices, want ${WANT.length}`);

@@ -97,41 +97,113 @@ typedef struct plugin_api_v2 {
 static const host_api_v1_t *g_host = NULL;
 
 /* ======================================================================== *
- *  The ten voices
+ *  Pads and voices — TEN DSP voices seated on SIXTEEN pads
  *
- *  `id` is what split_voices publishes AND the prefix its parameters carry
- *  (child_prefix "voice" + a 1-BASED index, matching child_index_base). The
- *  host substitutes an id into "{id}_send_a" VERBATIM to find a send level, so
- *  these two numberings must agree — a mismatch puts every send on the voice
- *  next door and nothing errors.
+ *  A drum rack on Move is sixteen pads at notes 36..51, and there are ten
+ *  drums, so six pads are ALIASES: a second pad addressing a voice another
+ *  pad already owns, at its own pitch offset. Upstream does the same thing
+ *  through General MIDI — it routes 40 to the snare and 47 to the mid tom —
+ *  but GM's pairs are +2 semitones apart, and in a 4-wide grid a +2 neighbour
+ *  is never an adjacent PAD. So the seating is chosen here instead, and every
+ *  alias sits next to its parent:
  *
- *  ⚠ NEVER REORDER. split_voices' order is the buffer contract, and a bus
- *  stores voice ids: appending is safe, inserting is not.
+ *      48 HI TOM*   49 CYMBAL    50 CYMBAL*   51 MID TOM*
+ *      44 HI TOM    45 LOW TOM*  46 HH OPEN   47 MID TOM
+ *      40 CLAP      41 LOW TOM   42 HH CL     43 HH CL*
+ *      36 KICK      37 RIM       38 SNARE     39 SNARE*
+ *
+ *  Snare and the three toms each keep the one alias upstream gives them. The
+ *  two extra fall on HH Closed and Cymbal, which is what the two notes
+ *  upstream leaves SILENT already mean (44 pedal hat, 51 ride) — every pad
+ *  here sounds, as it does in Move's own kits.
+ *
+ *  ⚠ THE COST, SAID OUT LOUD: these are NOT General MIDI notes. An imported
+ *  GM drum loop plays the wrong drums. Upstream's map is one table away.
+ *
+ *  ⚠ A PAD IS NOT A VOICE, and the two are addressed differently:
+ *    - Everything that makes a sound belongs to the VOICE, so both pads of a
+ *      pair share it. Turning Snare 2's Decay turns Snare's, because there is
+ *      one snare.
+ *    - `tune` belongs to the PAD. It is the only thing an alias owns, and it
+ *      is what stops a second pad being a duplicate.
  * ======================================================================== */
 #define SIMIAN_VOICES 10
+#define SIMIAN_PADS   16
 
 typedef struct {
-    const char *id;
     const char *label;
-    int         note;    /* the GM note this voice answers to */
     const char *role;    /* free-form hint for a consumer seating a grid */
 } voice_def_t;
 
 static const voice_def_t VOICES[SIMIAN_VOICES] = {
-    {"voice1",  "Kick",      36, "kick"},
-    {"voice2",  "Rimshot",   37, "rim"},
-    {"voice3",  "Snare",     38, "snare"},
-    {"voice4",  "Clap",      39, "clap"},
-    {"voice5",  "Low Tom",   41, "tom"},
-    {"voice6",  "HH Closed", 42, "hihat_closed"},
-    {"voice7",  "Mid Tom",   45, "tom"},
-    {"voice8",  "HH Open",   46, "hihat_open"},
-    {"voice9",  "High Tom",  48, "tom"},
-    {"voice10", "Cymbal",    49, "cymbal"},
+    {"Kick",      "kick"},
+    {"Rimshot",   "rim"},
+    {"Snare",     "snare"},
+    {"Clap",      "clap"},
+    {"Low Tom",   "tom"},
+    {"HH Closed", "hihat_closed"},
+    {"Mid Tom",   "tom"},
+    {"HH Open",   "hihat_open"},
+    {"High Tom",  "tom"},
+    {"Cymbal",    "cymbal"},
 };
 
 enum { V_KICK, V_RIM, V_SNARE, V_CLAP, V_LOWTOM, V_HHCLOSED,
        V_MIDTOM, V_HHOPEN, V_HITOM, V_CYMBAL };
+
+/* `id` is the prefix every one of this pad's parameters carries (child_prefix
+ * "pad" + a 1-BASED index, matching child_index_base) and, for the ten pads
+ * that own a voice outright, what split_voices publishes. The host
+ * substitutes an id into "{id}_send_a" VERBATIM, so those two numberings must
+ * agree — a mismatch puts every send on the pad next door and nothing errors.
+ *
+ * ⚠ NEVER REORDER: the order is the note order, the grid order and the state
+ * order at once.
+ *
+ * `choke` groups pads the way a Move kit does. A hit silences every OTHER
+ * VOICE in its group; two pads of one voice need no help, because a second
+ * hit on one DSP retriggers it. So group 2 (the cymbals) is declared and
+ * inert today, and earns its keep the moment the cymbal is ever split. */
+typedef struct {
+    const char *id;
+    const char *label;   /* what the device shows — keep it under 9 chars */
+    int         voice;
+    int         note;
+    float       tune;    /* default semitone offset; nonzero IS the alias */
+    int         choke;   /* 0 = none */
+} pad_def_t;
+
+static const pad_def_t PADS[SIMIAN_PADS] = {
+    {"pad1",  "Kick",     V_KICK,      36,  0.0f, 0},
+    {"pad2",  "Rim",      V_RIM,       37,  0.0f, 0},
+    {"pad3",  "Snare",    V_SNARE,     38,  0.0f, 0},
+    {"pad4",  "Snare 2",  V_SNARE,     39,  2.0f, 0},   /* upstream's +2 */
+    {"pad5",  "Clap",     V_CLAP,      40,  0.0f, 0},
+    {"pad6",  "Lo Tom",   V_LOWTOM,    41,  0.0f, 0},
+    {"pad7",  "HH Cl",    V_HHCLOSED,  42,  0.0f, 1},
+    {"pad8",  "HH Cl 2",  V_HHCLOSED,  43,  3.0f, 1},   /* ours: a tighter hat */
+    {"pad9",  "Hi Tom",   V_HITOM,     44,  0.0f, 0},
+    {"pad10", "Lo Tom 2", V_LOWTOM,    45,  2.0f, 0},   /* upstream's +2 */
+    {"pad11", "HH Open",  V_HHOPEN,    46,  0.0f, 1},
+    {"pad12", "Mid Tom",  V_MIDTOM,    47,  0.0f, 0},
+    {"pad13", "Hi Tom 2", V_HITOM,     48,  2.0f, 0},   /* upstream's +2 */
+    {"pad14", "Cymbal",   V_CYMBAL,    49,  0.0f, 2},
+    {"pad15", "Cymbal 2", V_CYMBAL,    50,  7.0f, 2},   /* ours: a ride-ish ping */
+    {"pad16", "Mid Tom2", V_MIDTOM,    51,  2.0f, 0},   /* upstream's +2 */
+};
+
+/* The pad that OWNS each voice — the first one declaring it. Its id is the
+ * canonical key for every shared parameter (state, chain_params) and the id
+ * split_voices publishes, because an alias has no audio path of its own. */
+static int voice_owner_pad(int v) {
+    for (int p = 0; p < SIMIAN_PADS; p++) if (PADS[p].voice == v) return p;
+    return 0;
+}
+
+static int note_to_pad(int note) {
+    for (int p = 0; p < SIMIAN_PADS; p++) if (PADS[p].note == note) return p;
+    return -1;
+}
 
 /* ======================================================================== *
  *  Parameter surface
@@ -222,14 +294,23 @@ static const gparam_def_t GLOBAL_PARAMS[] = {
 };
 #define GP_COUNT ((int)(sizeof(GLOBAL_PARAMS) / sizeof(GLOBAL_PARAMS[0])))
 
+/* The one parameter a PAD owns rather than shares. An alias pad is nothing
+ * but its parent voice plus this number, so it is the control that makes the
+ * second pad worth having — and it is per pad by definition: two pads with
+ * one tune would be the duplicate we started with. */
+static const vparam_def_t PAD_PARAMS[] = {
+    {"tune", "Tune", NULL, -24, 24, 0, "st"},
+};
+#define PP_COUNT ((int)(sizeof(PAD_PARAMS) / sizeof(PAD_PARAMS[0])))
+
 /* The focus knob. It is not a sound parameter, but it IS a knob on a page, so
  * it needs a chain_params entry: without one the host guesses its type and
- * range, and a mis-guessed range is a PAD knob that cannot reach voice 10. */
+ * range, and a mis-guessed range is a PAD knob that cannot reach pad 16. */
 static const gparam_def_t UI_PARAMS[] = {
-    /* 10, not SIMIAN_VOICES: the generators parse this table with a regex
-     * that only reads numeric literals, and a named constant makes the row
+    /* 16, not SIMIAN_PADS: the generators parse this table with a regex that
+     * only reads numeric literals, and a named constant makes the row
      * invisible to them. */
-    {"ui_current_voice", "Voice", NULL, 1, 10, 1, NULL},
+    {"ui_current_pad", "Pad", NULL, 1, 16, 1, NULL},
 };
 #define UI_COUNT ((int)(sizeof(UI_PARAMS) / sizeof(UI_PARAMS[0])))
 
@@ -245,18 +326,24 @@ static int find_global_param(const char *key) {
     return -1;
 }
 
-/* "voice7_cutoff" -> voice index 6, param index of "cutoff". The ids are
- * "voice" + a 1-based number, so this parses rather than table-scans; a
- * two-digit index must not be read as one. */
-static int split_voice_key(const char *key, int *out_voice) {
-    if (strncmp(key, "voice", 5) != 0) return -1;
-    const char *p = key + 5;
-    if (*p < '1' || *p > '9') return -1;
+/* "pad7_cutoff" -> pad index 6, and the bare key "cutoff". The ids are "pad"
+ * plus a 1-based number, so this parses rather than table-scans; a two-digit
+ * index must not be read as one. Returns the bare key, or NULL. */
+static const char *split_pad_key(const char *key, int *out_pad) {
+    if (strncmp(key, "pad", 3) != 0) return NULL;
+    const char *p = key + 3;
+    if (*p < '1' || *p > '9') return NULL;
     int n = 0;
     while (*p >= '0' && *p <= '9') { n = n * 10 + (*p - '0'); p++; }
-    if (*p != '_' || n < 1 || n > SIMIAN_VOICES) return -1;
-    *out_voice = n - 1;
-    return find_voice_param(p + 1);
+    if (*p != '_' || n < 1 || n > SIMIAN_PADS) return NULL;
+    *out_pad = n - 1;
+    return p + 1;
+}
+
+static int find_pad_param(const char *key) {
+    for (int i = 0; i < PP_COUNT; i++)
+        if (strcmp(PAD_PARAMS[i].key, key) == 0) return i;
+    return -1;
 }
 
 /* ======================================================================== *
@@ -294,17 +381,19 @@ typedef struct {
     float       gvalue[GP_COUNT];
     FAUSTFLOAT *z_out_wake;
 
+    float       pad_tune[SIMIAN_PADS];   /* per-pad semitone offset */
+
     int         silence_samples;     /* SIMIAN_SILENCE_MS in samples */
     int         cur_preset;          /* index into SIMIAN_FACTORY, -1 = defaults */
     int         octave_transpose;
     char        module_dir[512];
 
     /* Focus following — see the live-press block in v2_set_param. */
-    int         ui_current_voice;    /* 0-based here, 1-based on the wire */
+    int         ui_current_pad;      /* 0-based here, 1-based on the wire */
     int         ui_auto_select;
     int         live_armed;
     long        live_arm_block;
-    int         last_hit_voice;
+    int         last_hit_pad;
     long        last_hit_block;
     int         have_vouched;    /* any host has ever vouched */
     long        last_vouch_block;
@@ -337,6 +426,11 @@ static void set_voice_value(simian_t *inst, int v, int i, float display) {
     float x = clampf(display, p->min, p->max);
     inst->voice[v].value[i] = x;
     if (inst->voice[v].zone[i]) *inst->voice[v].zone[i] = (FAUSTFLOAT)x;
+}
+
+static void set_pad_value(simian_t *inst, int pad, int i, float display) {
+    const vparam_def_t *p = &PAD_PARAMS[i];
+    inst->pad_tune[pad] = clampf(display, p->min, p->max);   /* one row today */
 }
 
 static void set_global_value(simian_t *inst, int i, float display) {
@@ -378,6 +472,18 @@ static void voice_choke(simian_voice_t *v) {
     v->pending_trigger = -1.0f;
 }
 
+/* A hit silences every OTHER voice in the pad's choke group, the way a Move
+ * kit's chokeGroup does. Its own voice is skipped: the two pads of a pair
+ * share one DSP, and a second hit on it already restarts the envelope — so
+ * choking it here would cut the hit that just happened. */
+static void choke_group_of(simian_t *inst, int pad) {
+    int g = PADS[pad].choke;
+    if (!g) return;
+    for (int q = 0; q < SIMIAN_PADS; q++)
+        if (PADS[q].choke == g && PADS[q].voice != PADS[pad].voice)
+            voice_choke(&inst->voice[PADS[q].voice]);
+}
+
 static void all_notes_off(simian_t *inst) {
     for (int i = 0; i < SIMIAN_VOICES; i++) {
         simian_voice_t *v = &inst->voice[i];
@@ -385,38 +491,6 @@ static void all_notes_off(simian_t *inst) {
         if (v->z_choke)   *v->z_choke   = 0.0f;
         v->pending_trigger = -1.0f;
     }
-}
-
-/* ======================================================================== *
- *  Note map
- *
- *  Upstream's GeneralMidiDrums routing, flattened. A note not in this table is
- *  not ours and is ignored; the two choke-only notes (Pedal Hihat, Ride) play
- *  nothing and silence somebody else, which is what they do on a kit.
- * ======================================================================== */
-typedef struct { int note; int voice; } note_map_t;
-
-static const note_map_t NOTE_MAP[] = {
-    {35, V_KICK},   {36, V_KICK},
-    {37, V_RIM},
-    {38, V_SNARE},  {40, V_SNARE},
-    {39, V_CLAP},
-    {41, V_LOWTOM}, {43, V_LOWTOM},
-    {42, V_HHCLOSED},
-    {45, V_MIDTOM}, {47, V_MIDTOM},
-    {46, V_HHOPEN},
-    {48, V_HITOM},  {50, V_HITOM},
-    {49, V_CYMBAL},
-};
-#define NOTE_MAP_COUNT ((int)(sizeof(NOTE_MAP) / sizeof(NOTE_MAP[0])))
-
-#define NOTE_PEDAL_HIHAT 44
-#define NOTE_RIDE        51
-
-static int note_to_voice(int note) {
-    for (int i = 0; i < NOTE_MAP_COUNT; i++)
-        if (NOTE_MAP[i].note == note) return NOTE_MAP[i].voice;
-    return -1;
 }
 
 /* ======================================================================== *
@@ -434,6 +508,9 @@ static void load_preset(simian_t *inst, int idx) {
 }
 
 static void load_defaults(simian_t *inst) {
+    /* A pad's tune default is the pad's, not the parameter's: a nonzero one
+     * IS what makes that pad an alias rather than a duplicate. */
+    for (int d = 0; d < SIMIAN_PADS; d++) inst->pad_tune[d] = PADS[d].tune;
     for (int g = 0; g < GP_COUNT; g++) set_global_value(inst, g, GLOBAL_PARAMS[g].def);
     for (int v = 0; v < SIMIAN_VOICES; v++)
         for (int i = 0; i < VP_COUNT; i++) set_voice_value(inst, v, i, VOICE_PARAMS[i].def);
@@ -455,16 +532,18 @@ static void load_defaults(simian_t *inst) {
  *  drop ALL metadata for it, which silently kills the per-voice sends.
  * ======================================================================== */
 #define CHILD_COMMON \
-    "\"child_prefix\":\"voice\",\"child_count\":10,\"child_index_base\":1," \
-    "\"child_label\":\"Voice\",\"child_index_param\":\"ui_current_voice\"," \
-    "\"child_names\":[\"Kick\",\"Rimshot\",\"Snare\",\"Clap\",\"Low Tom\"," \
-                     "\"HH Closed\",\"Mid Tom\",\"HH Open\",\"High Tom\",\"Cymbal\"]," \
-    "\"child_roles\":[\"kick\",\"rim\",\"snare\",\"clap\",\"tom\"," \
-                     "\"hihat_closed\",\"tom\",\"hihat_open\",\"tom\",\"cymbal\"]," \
-    "\"child_copy_keys\":[\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"cutoff\",\"res\"," \
+    "\"child_prefix\":\"pad\",\"child_count\":16,\"child_index_base\":1," \
+    "\"child_label\":\"Pad\",\"child_index_param\":\"ui_current_pad\"," \
+    "\"child_names\":[\"Kick\",\"Rim\",\"Snare\",\"Snare 2\",\"Clap\",\"Lo Tom\"," \
+                     "\"HH Cl\",\"HH Cl 2\",\"Hi Tom\",\"Lo Tom 2\",\"HH Open\"," \
+                     "\"Mid Tom\",\"Hi Tom 2\",\"Cymbal\",\"Cymbal 2\",\"Mid Tom2\"]," \
+    "\"child_roles\":[\"kick\",\"rim\",\"snare\",\"snare\",\"clap\",\"tom\"," \
+                     "\"hihat_closed\",\"hihat_closed\",\"tom\",\"tom\",\"hihat_open\"," \
+                     "\"tom\",\"tom\",\"cymbal\",\"cymbal\",\"tom\"]," \
+    "\"child_copy_keys\":[\"tune\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"cutoff\",\"res\"," \
         "\"lp_bend\",\"lp_dyn\",\"decay\",\"punch\",\"noise\",\"click\",\"volume\"," \
         "\"pan\",\"vel_vol\",\"sat\",\"reverb\",\"send_a\",\"send_b\"]," \
-    "\"child_key_overrides\":{\"ui_current_voice\":\"ui_current_voice\"},"
+    "\"child_key_overrides\":{\"ui_current_pad\":\"ui_current_pad\"},"
 
 static const char *kUiHierarchy =
 "{\"pad_layout\":\"drums\",\"levels\":{"
@@ -472,23 +551,26 @@ static const char *kUiHierarchy =
    /* No knobs on root: any knob there silently becomes page 1 and buries the
     * kit browser. */
    "{\"level\":\"kits\",\"label\":\"Kit\"},"
-   "{\"level\":\"voices\",\"label\":\"Tone\"},"
-   "{\"level\":\"voice_noise\",\"label\":\"Noise\"},"
-   "{\"level\":\"voice_mix\",\"label\":\"Mix\"},"
+   "{\"level\":\"pads\",\"label\":\"Tone\"},"
+   "{\"level\":\"pad_noise\",\"label\":\"Noise\"},"
+   "{\"level\":\"pad_mix\",\"label\":\"Mix\"},"
    "{\"level\":\"output\",\"label\":\"Master\"}"
  "]},"
  "\"kits\":{\"name\":\"Kit\",\"list_param\":\"preset\",\"count_param\":\"preset_count\","
    "\"name_param\":\"preset_name\"},"
- "\"voices\":{\"name\":\"Tone\"," CHILD_COMMON
+ /* Tune sits beside the Pad selector deliberately: on an alias pad it is the
+  * only control not shared with its parent, so it is the first thing you
+  * reach for after choosing the pad. */
+ "\"pads\":{\"name\":\"Tone\"," CHILD_COMMON
    /* The note map lives here and nowhere else. */
-   "\"child_notes\":[36,37,38,39,41,42,45,46,48,49],"
+   "\"child_notes\":[36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51],"
    "\"child_press_param\":\"ui_live_press\",\"child_press_note_param\":\"ui_live_note\","
-   "\"knobs\":[\"ui_current_voice\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"decay\",\"punch\",\"noise\"],"
-   "\"params\":[\"ui_current_voice\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"decay\",\"punch\",\"noise\"]},"
- "\"voice_noise\":{\"name\":\"Noise\"," CHILD_COMMON
-   "\"knobs\":[\"cutoff\",\"res\",\"lp_bend\",\"lp_dyn\",\"click\"],"
-   "\"params\":[\"cutoff\",\"res\",\"lp_bend\",\"lp_dyn\",\"click\"]},"
- "\"voice_mix\":{\"name\":\"Mix\"," CHILD_COMMON
+   "\"knobs\":[\"ui_current_pad\",\"tune\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"decay\",\"punch\"],"
+   "\"params\":[\"ui_current_pad\",\"tune\",\"pitch\",\"wave\",\"bend\",\"bend_dyn\",\"decay\",\"punch\"]},"
+ "\"pad_noise\":{\"name\":\"Noise\"," CHILD_COMMON
+   "\"knobs\":[\"cutoff\",\"res\",\"lp_bend\",\"lp_dyn\",\"noise\",\"click\"],"
+   "\"params\":[\"cutoff\",\"res\",\"lp_bend\",\"lp_dyn\",\"noise\",\"click\"]},"
+ "\"pad_mix\":{\"name\":\"Mix\"," CHILD_COMMON
    "\"knobs\":[\"volume\",\"pan\",\"vel_vol\",\"sat\",\"reverb\",\"send_a\",\"send_b\"],"
    "\"params\":[\"volume\",\"pan\",\"vel_vol\",\"sat\",\"reverb\",\"send_a\",\"send_b\"]},"
  "\"output\":{\"name\":\"Master\","
@@ -536,22 +618,40 @@ static int build_chain_params(char *buf, int len) {
         n = append_param_json(buf, n, len, first, p->key, p->name, p->min, p->max, p->def, p->unit);
     }
     char key[80], name[80];
-    for (int v = 0; v < SIMIAN_VOICES; v++)
+    /* Tune is per PAD, so all sixteen are listed, each with its own default. */
+    for (int d = 0; d < SIMIAN_PADS; d++)
+        for (int i = 0; i < PP_COUNT && n < len - 256; i++, first = 0) {
+            const vparam_def_t *p = &PAD_PARAMS[i];
+            snprintf(key, sizeof(key), "%s_%s", PADS[d].id, p->key);
+            snprintf(name, sizeof(name), "%s %s", PADS[d].label, p->name);
+            n = append_param_json(buf, n, len, first, key, name, p->min, p->max,
+                                  PADS[d].tune, p->unit);
+        }
+    /* Everything else is per VOICE, and an alias addresses the same parameter
+     * as its parent — so it is listed ONCE, under the pad that owns the voice.
+     * Listing both pads would put two modulation targets on one value, and
+     * 16 x 19 would overrun the host's 256 anyway. */
+    for (int v = 0; v < SIMIAN_VOICES; v++) {
+        int owner = voice_owner_pad(v);
         for (int i = 0; i < VP_COUNT && n < len - 256; i++, first = 0) {
             const vparam_def_t *p = &VOICE_PARAMS[i];
-            snprintf(key, sizeof(key), "%s_%s", VOICES[v].id, p->key);
+            snprintf(key, sizeof(key), "%s_%s", PADS[owner].id, p->key);
             snprintf(name, sizeof(name), "%s %s", VOICES[v].label, p->name);
             n = append_param_json(buf, n, len, first, key, name, p->min, p->max, p->def, p->unit);
         }
+    }
     n += snprintf(buf + n, len - n, "]");
     return n;
 }
 
+/* TEN entries, not sixteen: an alias pad has no audio path of its own, so the
+ * id published is the pad that OWNS the voice — which is also the pad its
+ * send levels are keyed under. */
 static int build_split_voices(char *buf, int len) {
     int n = snprintf(buf, len, "[");
     for (int v = 0; v < SIMIAN_VOICES && n < len - 64; v++)
         n += snprintf(buf + n, len - n, "%s{\"id\":\"%s\",\"label\":\"%s\",\"role\":\"%s\"}",
-                      v ? "," : "", VOICES[v].id, VOICES[v].label, VOICES[v].role);
+                      v ? "," : "", PADS[voice_owner_pad(v)].id, VOICES[v].label, VOICES[v].role);
     n += snprintf(buf + n, len - n, "]");
     return n;
 }
@@ -574,15 +674,22 @@ static int json_get_number(const char *json, const char *key, float *out) {
     return 0;
 }
 
+/* Keyed the same way chain_params is: every pad's tune, and each voice's
+ * parameters ONCE under the pad that owns it. Writing an alias's copy too
+ * would double the blob and make "which one wins on restore" a question. */
 static int build_state(simian_t *inst, char *buf, int buf_len) {
-    int n = snprintf(buf, buf_len, "{\"preset\":%d,\"octave_transpose\":%d,\"ui_current_voice\":%d",
-                     inst->cur_preset, inst->octave_transpose, inst->ui_current_voice + 1);
+    int n = snprintf(buf, buf_len, "{\"preset\":%d,\"octave_transpose\":%d,\"ui_current_pad\":%d",
+                     inst->cur_preset, inst->octave_transpose, inst->ui_current_pad + 1);
     for (int g = 0; g < GP_COUNT && n < buf_len - 64; g++)
         n += snprintf(buf + n, buf_len - n, ",\"%s\":%.4f", GLOBAL_PARAMS[g].key, inst->gvalue[g]);
-    for (int v = 0; v < SIMIAN_VOICES; v++)
+    for (int d = 0; d < SIMIAN_PADS && n < buf_len - 64; d++)
+        n += snprintf(buf + n, buf_len - n, ",\"%s_tune\":%.4f", PADS[d].id, inst->pad_tune[d]);
+    for (int v = 0; v < SIMIAN_VOICES; v++) {
+        int owner = voice_owner_pad(v);
         for (int i = 0; i < VP_COUNT && n < buf_len - 64; i++)
             n += snprintf(buf + n, buf_len - n, ",\"%s_%s\":%.4f",
-                          VOICES[v].id, VOICE_PARAMS[i].key, inst->voice[v].value[i]);
+                          PADS[owner].id, VOICE_PARAMS[i].key, inst->voice[v].value[i]);
+    }
     n += snprintf(buf + n, buf_len - n, "}");
     return n;
 }
@@ -595,20 +702,26 @@ static void restore_state(simian_t *inst, const char *json) {
         else inst->cur_preset = -1;
     }
     if (json_get_number(json, "octave_transpose", &f) == 0) inst->octave_transpose = (int)f;
-    if (json_get_number(json, "ui_current_voice", &f) == 0) {
-        int v = (int)f - 1;
-        if (v >= 0 && v < SIMIAN_VOICES) inst->ui_current_voice = v;
+    if (json_get_number(json, "ui_current_pad", &f) == 0) {
+        int d = (int)f - 1;
+        if (d >= 0 && d < SIMIAN_PADS) inst->ui_current_pad = d;
     }
     /* After the preset, so a value edited since the kit was picked wins — the
      * slot keeps the sound it was saved with. */
     for (int g = 0; g < GP_COUNT; g++)
         if (json_get_number(json, GLOBAL_PARAMS[g].key, &f) == 0) set_global_value(inst, g, f);
     char key[80];
-    for (int v = 0; v < SIMIAN_VOICES; v++)
+    for (int d = 0; d < SIMIAN_PADS; d++) {
+        snprintf(key, sizeof(key), "%s_tune", PADS[d].id);
+        if (json_get_number(json, key, &f) == 0) set_pad_value(inst, d, 0, f);
+    }
+    for (int v = 0; v < SIMIAN_VOICES; v++) {
+        int owner = voice_owner_pad(v);
         for (int i = 0; i < VP_COUNT; i++) {
-            snprintf(key, sizeof(key), "%s_%s", VOICES[v].id, VOICE_PARAMS[i].key);
+            snprintf(key, sizeof(key), "%s_%s", PADS[owner].id, VOICE_PARAMS[i].key);
             if (json_get_number(json, key, &f) == 0) set_voice_value(inst, v, i, f);
         }
+    }
 }
 
 /* ======================================================================== *
@@ -636,11 +749,11 @@ static void *v2_create_instance(const char *module_dir, const char *json_default
     if (!inst) return NULL;
     inst->cur_preset = -1;
     inst->octave_transpose = 0;
-    inst->ui_current_voice = 0;
+    inst->ui_current_pad = 0;
     inst->ui_auto_select = 1;
     inst->live_armed = 0;
     inst->live_arm_block = 0;
-    inst->last_hit_voice = -1;
+    inst->last_hit_pad = -1;
     inst->last_hit_block = 0;
     inst->have_vouched = 0;
     inst->last_vouch_block = 0;
@@ -693,19 +806,19 @@ static int host_vouches(const simian_t *inst) {
  * finger caused it. A note alone with a transport running cannot: a live hit
  * and a sequenced one are identical here, so following every note would let
  * playback drag the editor around. */
-static void note_hit_focus(simian_t *inst, int vi) {
-    inst->last_hit_voice = vi;
+static void note_hit_focus(simian_t *inst, int pad) {
+    inst->last_hit_pad = pad;
     inst->last_hit_block = inst->block;
     if (!inst->ui_auto_select) return;
     if (!transport_running() && !host_vouches(inst)) {
-        inst->ui_current_voice = vi;
+        inst->ui_current_pad = pad;
         inst->live_armed = 0;
-        inst->last_hit_voice = -1;
+        inst->last_hit_pad = -1;
     } else if (inst->live_armed &&
                (inst->block - inst->live_arm_block) <= SIMIAN_LIVE_MATCH_BLOCKS) {
-        inst->ui_current_voice = vi;
+        inst->ui_current_pad = pad;
         inst->live_armed = 0;
-        inst->last_hit_voice = -1;   /* consumed: one note vouches for one press */
+        inst->last_hit_pad = -1;   /* consumed: one note vouches for one press */
     }
 }
 
@@ -725,15 +838,9 @@ static void v2_on_midi(void *instance, const uint8_t *msg, int len, int source) 
             int note = (int)d1 + inst->octave_transpose * 12;
             if (note < 0 || note > 127) return;
 
-            if (note == NOTE_PEDAL_HIHAT) {
-                voice_choke(&inst->voice[V_HHCLOSED]);
-                voice_choke(&inst->voice[V_HHOPEN]);
-                break;
-            }
-            if (note == NOTE_RIDE) { voice_choke(&inst->voice[V_CYMBAL]); break; }
-
-            int vi = note_to_voice(note);
-            if (vi < 0) break;
+            int pad = note_to_pad(note);
+            if (pad < 0) break;          /* not one of our sixteen */
+            int vi = PADS[pad].voice;
 
             /* Sensitivity compresses the velocity range toward 80/127, which
              * is upstream's law, applied here because its Faust zone was
@@ -742,18 +849,17 @@ static void v2_on_midi(void *instance, const uint8_t *msg, int len, int source) 
             float sens = inst->gvalue[find_global_param("sens")] * 0.01f;
             vel = vel * sens + (1.0f - sens) * (80.0f / 127.0f);
 
-            /* Transpose is the module's, in semitones, on drum.dsp's own
-             * relative `key`. A hit on a voice's ALIAS note (40 for the snare,
-             * 43 for the low tom) plays it transposed by the difference, which
-             * is upstream's chromatic behaviour on its per-voice channels. */
-            float offset = (float)(note - VOICES[vi].note)
+            /* What the pad is worth on its own: its Tune, plus the module's
+             * Transpose, on drum.dsp's own relative `key`. An alias pad is
+             * exactly this number away from its parent — with tune at 0 the
+             * two pads ARE the same drum, which is the state this design
+             * exists to make visible rather than accidental. */
+            float offset = inst->pad_tune[pad]
                          + inst->gvalue[find_global_param("transpose")];
 
-            /* The closed hat chokes the open one, as on any kit. */
-            if (vi == V_HHCLOSED) voice_choke(&inst->voice[V_HHOPEN]);
-
+            choke_group_of(inst, pad);
             voice_note_on(inst, vi, offset, vel);
-            note_hit_focus(inst, vi);
+            note_hit_focus(inst, pad);
             break;
         }
         case 0xE0: {
@@ -797,9 +903,9 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         if (idx >= 0 && idx < preset_count() && idx != inst->cur_preset) load_preset(inst, idx);
         return;
     }
-    if (strcmp(key, "ui_current_voice") == 0) {
-        int v = atoi(val) - 1;                       /* 1-based on the wire */
-        inst->ui_current_voice = (v < 0) ? 0 : (v >= SIMIAN_VOICES ? SIMIAN_VOICES - 1 : v);
+    if (strcmp(key, "ui_current_pad") == 0) {
+        int d = atoi(val) - 1;                       /* 1-based on the wire */
+        inst->ui_current_pad = (d < 0) ? 0 : (d >= SIMIAN_PADS ? SIMIAN_PADS - 1 : d);
         return;
     }
     if (strcmp(key, "ui_auto_select") == 0) { inst->ui_auto_select = atoi(val) != 0; return; }
@@ -814,13 +920,13 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         if (!inst->ui_auto_select) return;
         int n = atoi(val);
         if (n < 0 || n > 127) return;
-        int vi = note_to_voice(n);
-        if (vi < 0) return;                          /* unmapped: not our note */
-        inst->ui_current_voice = vi;
+        int pad = note_to_pad(n);
+        if (pad < 0) return;                         /* unmapped: not our note */
+        inst->ui_current_pad = pad;
         /* Consume any vouch in flight, so it cannot later credit a SEQUENCED
          * note over the authoritative answer we just took. */
         inst->live_armed = 0;
-        inst->last_hit_voice = -1;
+        inst->last_hit_pad = -1;
         return;
     }
 
@@ -833,11 +939,11 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
         inst->have_vouched = 1;
         inst->last_vouch_block = inst->block;
         if (!inst->ui_auto_select) return;
-        if (inst->last_hit_voice >= 0 &&
+        if (inst->last_hit_pad >= 0 &&
             (inst->block - inst->last_hit_block) <= SIMIAN_LIVE_MATCH_BLOCKS) {
-            inst->ui_current_voice = inst->last_hit_voice;
+            inst->ui_current_pad = inst->last_hit_pad;
             inst->live_armed = 0;
-            inst->last_hit_voice = -1;
+            inst->last_hit_pad = -1;
         } else {
             inst->live_armed = 1;
             inst->live_arm_block = inst->block;
@@ -848,14 +954,21 @@ static void v2_set_param(void *instance, const char *key, const char *val) {
     int g = find_global_param(key);
     if (g >= 0) { set_global_value(inst, g, (float)atof(val)); return; }
 
-    int vi = -1;
-    int pi = split_voice_key(key, &vi);
-    if (pi >= 0) { set_voice_value(inst, vi, pi, (float)atof(val)); return; }
-
-    /* A bare voice key addresses the FOCUSED voice, which is how the child
-     * levels' knobs arrive when a consumer has not expanded the template. */
-    pi = find_voice_param(key);
-    if (pi >= 0) set_voice_value(inst, inst->ui_current_voice, pi, (float)atof(val));
+    /* A prefixed key names a PAD. `tune` is that pad's own; everything else
+     * belongs to the voice behind it, which an alias shares with its parent —
+     * so writing pad4_decay writes the snare's decay, seen from both pads. */
+    int pad = -1;
+    const char *bare = split_pad_key(key, &pad);
+    if (!bare) {
+        /* A bare key addresses the FOCUSED pad, which is how a child level's
+         * knobs arrive when a consumer has not expanded the template. */
+        pad = inst->ui_current_pad;
+        bare = key;
+    }
+    int pi = find_pad_param(bare);
+    if (pi >= 0) { set_pad_value(inst, pad, pi, (float)atof(val)); return; }
+    pi = find_voice_param(bare);
+    if (pi >= 0) set_voice_value(inst, PADS[pad].voice, pi, (float)atof(val));
 }
 
 static int v2_get_param(void *instance, const char *key, char *buf, int buf_len) {
@@ -880,19 +993,22 @@ static int v2_get_param(void *instance, const char *key, char *buf, int buf_len)
     }
     if (strcmp(key, "octave_transpose") == 0)
         return snprintf(buf, buf_len, "%d", inst->octave_transpose);
-    if (strcmp(key, "ui_current_voice") == 0)
-        return snprintf(buf, buf_len, "%d", inst->ui_current_voice + 1);
+    if (strcmp(key, "ui_current_pad") == 0)
+        return snprintf(buf, buf_len, "%d", inst->ui_current_pad + 1);
+    /* TEN, not sixteen: the pads are a seating plan, the voices are what can
+     * sound at once. */
     if (strcmp(key, "polyphony") == 0) return snprintf(buf, buf_len, "%d", SIMIAN_VOICES);
 
     int g = find_global_param(key);
     if (g >= 0) return snprintf(buf, buf_len, "%.3f", inst->gvalue[g]);
 
-    int vi = -1;
-    int pi = split_voice_key(key, &vi);
-    if (pi >= 0) return snprintf(buf, buf_len, "%.3f", inst->voice[vi].value[pi]);
-
-    pi = find_voice_param(key);
-    if (pi >= 0) return snprintf(buf, buf_len, "%.3f", inst->voice[inst->ui_current_voice].value[pi]);
+    int pad = -1;
+    const char *bare = split_pad_key(key, &pad);
+    if (!bare) { pad = inst->ui_current_pad; bare = key; }
+    int pi = find_pad_param(bare);
+    if (pi >= 0) return snprintf(buf, buf_len, "%.3f", inst->pad_tune[pad]);
+    pi = find_voice_param(bare);
+    if (pi >= 0) return snprintf(buf, buf_len, "%.3f", inst->voice[PADS[pad].voice].value[pi]);
 
     return -1;   /* NEGATIVE for an unknown key: 0 would claim the value is "" */
 }

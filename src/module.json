@@ -82,15 +82,159 @@
         "unit": "st"
       },
       {
-        "key": "ui_current_voice",
-        "name": "Voice",
+        "key": "ui_current_pad",
+        "name": "Pad",
         "type": "int",
         "min": 1,
-        "max": 10,
+        "max": 16,
         "default": 1
       },
       {
-        "key": "voice1_pitch",
+        "key": "pad1_tune",
+        "name": "Kick Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad2_tune",
+        "name": "Rim Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad3_tune",
+        "name": "Snare Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad4_tune",
+        "name": "Snare 2 Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 2,
+        "unit": "st"
+      },
+      {
+        "key": "pad5_tune",
+        "name": "Clap Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad6_tune",
+        "name": "Lo Tom Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad7_tune",
+        "name": "HH Cl Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad8_tune",
+        "name": "HH Cl 2 Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 3,
+        "unit": "st"
+      },
+      {
+        "key": "pad9_tune",
+        "name": "Hi Tom Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad10_tune",
+        "name": "Lo Tom 2 Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 2,
+        "unit": "st"
+      },
+      {
+        "key": "pad11_tune",
+        "name": "HH Open Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad12_tune",
+        "name": "Mid Tom Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad13_tune",
+        "name": "Hi Tom 2 Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 2,
+        "unit": "st"
+      },
+      {
+        "key": "pad14_tune",
+        "name": "Cymbal Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": "st"
+      },
+      {
+        "key": "pad15_tune",
+        "name": "Cymbal 2 Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 7,
+        "unit": "st"
+      },
+      {
+        "key": "pad16_tune",
+        "name": "Mid Tom2 Tune",
+        "type": "int",
+        "min": -24,
+        "max": 24,
+        "default": 2,
+        "unit": "st"
+      },
+      {
+        "key": "pad1_pitch",
         "name": "Kick Pitch",
         "type": "int",
         "min": 30,
@@ -99,7 +243,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice1_wave",
+        "key": "pad1_wave",
         "name": "Kick Wave",
         "type": "int",
         "min": 0,
@@ -108,7 +252,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_bend",
+        "key": "pad1_bend",
         "name": "Kick Bend",
         "type": "int",
         "min": -36,
@@ -117,7 +261,7 @@
         "unit": "st"
       },
       {
-        "key": "voice1_bend_dyn",
+        "key": "pad1_bend_dyn",
         "name": "Kick Bend Dyn",
         "type": "int",
         "min": 0,
@@ -126,7 +270,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_cutoff",
+        "key": "pad1_cutoff",
         "name": "Kick Cutoff",
         "type": "int",
         "min": 440,
@@ -135,7 +279,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice1_res",
+        "key": "pad1_res",
         "name": "Kick Res",
         "type": "int",
         "min": 0,
@@ -144,7 +288,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_lp_bend",
+        "key": "pad1_lp_bend",
         "name": "Kick LP Bend",
         "type": "int",
         "min": -36,
@@ -153,7 +297,7 @@
         "unit": "st"
       },
       {
-        "key": "voice1_lp_dyn",
+        "key": "pad1_lp_dyn",
         "name": "Kick LP Dyn",
         "type": "int",
         "min": 0,
@@ -162,7 +306,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_decay",
+        "key": "pad1_decay",
         "name": "Kick Decay",
         "type": "int",
         "min": 10,
@@ -171,7 +315,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice1_punch",
+        "key": "pad1_punch",
         "name": "Kick Punch",
         "type": "int",
         "min": 0,
@@ -180,7 +324,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_noise",
+        "key": "pad1_noise",
         "name": "Kick Tone/Nse",
         "type": "int",
         "min": 0,
@@ -189,7 +333,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_click",
+        "key": "pad1_click",
         "name": "Kick Click",
         "type": "int",
         "min": 0,
@@ -198,7 +342,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_volume",
+        "key": "pad1_volume",
         "name": "Kick Volume",
         "type": "int",
         "min": -60,
@@ -207,7 +351,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice1_pan",
+        "key": "pad1_pan",
         "name": "Kick Pan",
         "type": "int",
         "min": -100,
@@ -216,7 +360,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_vel_vol",
+        "key": "pad1_vel_vol",
         "name": "Kick Vel Vol",
         "type": "int",
         "min": 0,
@@ -225,7 +369,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_sat",
+        "key": "pad1_sat",
         "name": "Kick Sat",
         "type": "int",
         "min": 0,
@@ -234,7 +378,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_reverb",
+        "key": "pad1_reverb",
         "name": "Kick Reverb",
         "type": "int",
         "min": 0,
@@ -243,7 +387,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_send_a",
+        "key": "pad1_send_a",
         "name": "Kick Send A",
         "type": "int",
         "min": 0,
@@ -252,7 +396,7 @@
         "unit": "%"
       },
       {
-        "key": "voice1_send_b",
+        "key": "pad1_send_b",
         "name": "Kick Send B",
         "type": "int",
         "min": 0,
@@ -261,7 +405,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_pitch",
+        "key": "pad2_pitch",
         "name": "Rimshot Pitch",
         "type": "int",
         "min": 30,
@@ -270,7 +414,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice2_wave",
+        "key": "pad2_wave",
         "name": "Rimshot Wave",
         "type": "int",
         "min": 0,
@@ -279,7 +423,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_bend",
+        "key": "pad2_bend",
         "name": "Rimshot Bend",
         "type": "int",
         "min": -36,
@@ -288,7 +432,7 @@
         "unit": "st"
       },
       {
-        "key": "voice2_bend_dyn",
+        "key": "pad2_bend_dyn",
         "name": "Rimshot Bend Dyn",
         "type": "int",
         "min": 0,
@@ -297,7 +441,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_cutoff",
+        "key": "pad2_cutoff",
         "name": "Rimshot Cutoff",
         "type": "int",
         "min": 440,
@@ -306,7 +450,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice2_res",
+        "key": "pad2_res",
         "name": "Rimshot Res",
         "type": "int",
         "min": 0,
@@ -315,7 +459,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_lp_bend",
+        "key": "pad2_lp_bend",
         "name": "Rimshot LP Bend",
         "type": "int",
         "min": -36,
@@ -324,7 +468,7 @@
         "unit": "st"
       },
       {
-        "key": "voice2_lp_dyn",
+        "key": "pad2_lp_dyn",
         "name": "Rimshot LP Dyn",
         "type": "int",
         "min": 0,
@@ -333,7 +477,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_decay",
+        "key": "pad2_decay",
         "name": "Rimshot Decay",
         "type": "int",
         "min": 10,
@@ -342,7 +486,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice2_punch",
+        "key": "pad2_punch",
         "name": "Rimshot Punch",
         "type": "int",
         "min": 0,
@@ -351,7 +495,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_noise",
+        "key": "pad2_noise",
         "name": "Rimshot Tone/Nse",
         "type": "int",
         "min": 0,
@@ -360,7 +504,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_click",
+        "key": "pad2_click",
         "name": "Rimshot Click",
         "type": "int",
         "min": 0,
@@ -369,7 +513,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_volume",
+        "key": "pad2_volume",
         "name": "Rimshot Volume",
         "type": "int",
         "min": -60,
@@ -378,7 +522,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice2_pan",
+        "key": "pad2_pan",
         "name": "Rimshot Pan",
         "type": "int",
         "min": -100,
@@ -387,7 +531,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_vel_vol",
+        "key": "pad2_vel_vol",
         "name": "Rimshot Vel Vol",
         "type": "int",
         "min": 0,
@@ -396,7 +540,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_sat",
+        "key": "pad2_sat",
         "name": "Rimshot Sat",
         "type": "int",
         "min": 0,
@@ -405,7 +549,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_reverb",
+        "key": "pad2_reverb",
         "name": "Rimshot Reverb",
         "type": "int",
         "min": 0,
@@ -414,7 +558,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_send_a",
+        "key": "pad2_send_a",
         "name": "Rimshot Send A",
         "type": "int",
         "min": 0,
@@ -423,7 +567,7 @@
         "unit": "%"
       },
       {
-        "key": "voice2_send_b",
+        "key": "pad2_send_b",
         "name": "Rimshot Send B",
         "type": "int",
         "min": 0,
@@ -432,7 +576,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_pitch",
+        "key": "pad3_pitch",
         "name": "Snare Pitch",
         "type": "int",
         "min": 30,
@@ -441,7 +585,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice3_wave",
+        "key": "pad3_wave",
         "name": "Snare Wave",
         "type": "int",
         "min": 0,
@@ -450,7 +594,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_bend",
+        "key": "pad3_bend",
         "name": "Snare Bend",
         "type": "int",
         "min": -36,
@@ -459,7 +603,7 @@
         "unit": "st"
       },
       {
-        "key": "voice3_bend_dyn",
+        "key": "pad3_bend_dyn",
         "name": "Snare Bend Dyn",
         "type": "int",
         "min": 0,
@@ -468,7 +612,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_cutoff",
+        "key": "pad3_cutoff",
         "name": "Snare Cutoff",
         "type": "int",
         "min": 440,
@@ -477,7 +621,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice3_res",
+        "key": "pad3_res",
         "name": "Snare Res",
         "type": "int",
         "min": 0,
@@ -486,7 +630,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_lp_bend",
+        "key": "pad3_lp_bend",
         "name": "Snare LP Bend",
         "type": "int",
         "min": -36,
@@ -495,7 +639,7 @@
         "unit": "st"
       },
       {
-        "key": "voice3_lp_dyn",
+        "key": "pad3_lp_dyn",
         "name": "Snare LP Dyn",
         "type": "int",
         "min": 0,
@@ -504,7 +648,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_decay",
+        "key": "pad3_decay",
         "name": "Snare Decay",
         "type": "int",
         "min": 10,
@@ -513,7 +657,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice3_punch",
+        "key": "pad3_punch",
         "name": "Snare Punch",
         "type": "int",
         "min": 0,
@@ -522,7 +666,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_noise",
+        "key": "pad3_noise",
         "name": "Snare Tone/Nse",
         "type": "int",
         "min": 0,
@@ -531,7 +675,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_click",
+        "key": "pad3_click",
         "name": "Snare Click",
         "type": "int",
         "min": 0,
@@ -540,7 +684,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_volume",
+        "key": "pad3_volume",
         "name": "Snare Volume",
         "type": "int",
         "min": -60,
@@ -549,7 +693,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice3_pan",
+        "key": "pad3_pan",
         "name": "Snare Pan",
         "type": "int",
         "min": -100,
@@ -558,7 +702,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_vel_vol",
+        "key": "pad3_vel_vol",
         "name": "Snare Vel Vol",
         "type": "int",
         "min": 0,
@@ -567,7 +711,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_sat",
+        "key": "pad3_sat",
         "name": "Snare Sat",
         "type": "int",
         "min": 0,
@@ -576,7 +720,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_reverb",
+        "key": "pad3_reverb",
         "name": "Snare Reverb",
         "type": "int",
         "min": 0,
@@ -585,7 +729,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_send_a",
+        "key": "pad3_send_a",
         "name": "Snare Send A",
         "type": "int",
         "min": 0,
@@ -594,7 +738,7 @@
         "unit": "%"
       },
       {
-        "key": "voice3_send_b",
+        "key": "pad3_send_b",
         "name": "Snare Send B",
         "type": "int",
         "min": 0,
@@ -603,7 +747,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_pitch",
+        "key": "pad5_pitch",
         "name": "Clap Pitch",
         "type": "int",
         "min": 30,
@@ -612,7 +756,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice4_wave",
+        "key": "pad5_wave",
         "name": "Clap Wave",
         "type": "int",
         "min": 0,
@@ -621,7 +765,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_bend",
+        "key": "pad5_bend",
         "name": "Clap Bend",
         "type": "int",
         "min": -36,
@@ -630,7 +774,7 @@
         "unit": "st"
       },
       {
-        "key": "voice4_bend_dyn",
+        "key": "pad5_bend_dyn",
         "name": "Clap Bend Dyn",
         "type": "int",
         "min": 0,
@@ -639,7 +783,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_cutoff",
+        "key": "pad5_cutoff",
         "name": "Clap Cutoff",
         "type": "int",
         "min": 440,
@@ -648,7 +792,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice4_res",
+        "key": "pad5_res",
         "name": "Clap Res",
         "type": "int",
         "min": 0,
@@ -657,7 +801,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_lp_bend",
+        "key": "pad5_lp_bend",
         "name": "Clap LP Bend",
         "type": "int",
         "min": -36,
@@ -666,7 +810,7 @@
         "unit": "st"
       },
       {
-        "key": "voice4_lp_dyn",
+        "key": "pad5_lp_dyn",
         "name": "Clap LP Dyn",
         "type": "int",
         "min": 0,
@@ -675,7 +819,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_decay",
+        "key": "pad5_decay",
         "name": "Clap Decay",
         "type": "int",
         "min": 10,
@@ -684,7 +828,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice4_punch",
+        "key": "pad5_punch",
         "name": "Clap Punch",
         "type": "int",
         "min": 0,
@@ -693,7 +837,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_noise",
+        "key": "pad5_noise",
         "name": "Clap Tone/Nse",
         "type": "int",
         "min": 0,
@@ -702,7 +846,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_click",
+        "key": "pad5_click",
         "name": "Clap Click",
         "type": "int",
         "min": 0,
@@ -711,7 +855,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_volume",
+        "key": "pad5_volume",
         "name": "Clap Volume",
         "type": "int",
         "min": -60,
@@ -720,7 +864,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice4_pan",
+        "key": "pad5_pan",
         "name": "Clap Pan",
         "type": "int",
         "min": -100,
@@ -729,7 +873,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_vel_vol",
+        "key": "pad5_vel_vol",
         "name": "Clap Vel Vol",
         "type": "int",
         "min": 0,
@@ -738,7 +882,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_sat",
+        "key": "pad5_sat",
         "name": "Clap Sat",
         "type": "int",
         "min": 0,
@@ -747,7 +891,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_reverb",
+        "key": "pad5_reverb",
         "name": "Clap Reverb",
         "type": "int",
         "min": 0,
@@ -756,7 +900,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_send_a",
+        "key": "pad5_send_a",
         "name": "Clap Send A",
         "type": "int",
         "min": 0,
@@ -765,7 +909,7 @@
         "unit": "%"
       },
       {
-        "key": "voice4_send_b",
+        "key": "pad5_send_b",
         "name": "Clap Send B",
         "type": "int",
         "min": 0,
@@ -774,7 +918,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_pitch",
+        "key": "pad6_pitch",
         "name": "Low Tom Pitch",
         "type": "int",
         "min": 30,
@@ -783,7 +927,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice5_wave",
+        "key": "pad6_wave",
         "name": "Low Tom Wave",
         "type": "int",
         "min": 0,
@@ -792,7 +936,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_bend",
+        "key": "pad6_bend",
         "name": "Low Tom Bend",
         "type": "int",
         "min": -36,
@@ -801,7 +945,7 @@
         "unit": "st"
       },
       {
-        "key": "voice5_bend_dyn",
+        "key": "pad6_bend_dyn",
         "name": "Low Tom Bend Dyn",
         "type": "int",
         "min": 0,
@@ -810,7 +954,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_cutoff",
+        "key": "pad6_cutoff",
         "name": "Low Tom Cutoff",
         "type": "int",
         "min": 440,
@@ -819,7 +963,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice5_res",
+        "key": "pad6_res",
         "name": "Low Tom Res",
         "type": "int",
         "min": 0,
@@ -828,7 +972,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_lp_bend",
+        "key": "pad6_lp_bend",
         "name": "Low Tom LP Bend",
         "type": "int",
         "min": -36,
@@ -837,7 +981,7 @@
         "unit": "st"
       },
       {
-        "key": "voice5_lp_dyn",
+        "key": "pad6_lp_dyn",
         "name": "Low Tom LP Dyn",
         "type": "int",
         "min": 0,
@@ -846,7 +990,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_decay",
+        "key": "pad6_decay",
         "name": "Low Tom Decay",
         "type": "int",
         "min": 10,
@@ -855,7 +999,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice5_punch",
+        "key": "pad6_punch",
         "name": "Low Tom Punch",
         "type": "int",
         "min": 0,
@@ -864,7 +1008,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_noise",
+        "key": "pad6_noise",
         "name": "Low Tom Tone/Nse",
         "type": "int",
         "min": 0,
@@ -873,7 +1017,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_click",
+        "key": "pad6_click",
         "name": "Low Tom Click",
         "type": "int",
         "min": 0,
@@ -882,7 +1026,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_volume",
+        "key": "pad6_volume",
         "name": "Low Tom Volume",
         "type": "int",
         "min": -60,
@@ -891,7 +1035,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice5_pan",
+        "key": "pad6_pan",
         "name": "Low Tom Pan",
         "type": "int",
         "min": -100,
@@ -900,7 +1044,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_vel_vol",
+        "key": "pad6_vel_vol",
         "name": "Low Tom Vel Vol",
         "type": "int",
         "min": 0,
@@ -909,7 +1053,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_sat",
+        "key": "pad6_sat",
         "name": "Low Tom Sat",
         "type": "int",
         "min": 0,
@@ -918,7 +1062,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_reverb",
+        "key": "pad6_reverb",
         "name": "Low Tom Reverb",
         "type": "int",
         "min": 0,
@@ -927,7 +1071,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_send_a",
+        "key": "pad6_send_a",
         "name": "Low Tom Send A",
         "type": "int",
         "min": 0,
@@ -936,7 +1080,7 @@
         "unit": "%"
       },
       {
-        "key": "voice5_send_b",
+        "key": "pad6_send_b",
         "name": "Low Tom Send B",
         "type": "int",
         "min": 0,
@@ -945,7 +1089,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_pitch",
+        "key": "pad7_pitch",
         "name": "HH Closed Pitch",
         "type": "int",
         "min": 30,
@@ -954,7 +1098,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice6_wave",
+        "key": "pad7_wave",
         "name": "HH Closed Wave",
         "type": "int",
         "min": 0,
@@ -963,7 +1107,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_bend",
+        "key": "pad7_bend",
         "name": "HH Closed Bend",
         "type": "int",
         "min": -36,
@@ -972,7 +1116,7 @@
         "unit": "st"
       },
       {
-        "key": "voice6_bend_dyn",
+        "key": "pad7_bend_dyn",
         "name": "HH Closed Bend Dyn",
         "type": "int",
         "min": 0,
@@ -981,7 +1125,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_cutoff",
+        "key": "pad7_cutoff",
         "name": "HH Closed Cutoff",
         "type": "int",
         "min": 440,
@@ -990,7 +1134,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice6_res",
+        "key": "pad7_res",
         "name": "HH Closed Res",
         "type": "int",
         "min": 0,
@@ -999,7 +1143,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_lp_bend",
+        "key": "pad7_lp_bend",
         "name": "HH Closed LP Bend",
         "type": "int",
         "min": -36,
@@ -1008,7 +1152,7 @@
         "unit": "st"
       },
       {
-        "key": "voice6_lp_dyn",
+        "key": "pad7_lp_dyn",
         "name": "HH Closed LP Dyn",
         "type": "int",
         "min": 0,
@@ -1017,7 +1161,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_decay",
+        "key": "pad7_decay",
         "name": "HH Closed Decay",
         "type": "int",
         "min": 10,
@@ -1026,7 +1170,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice6_punch",
+        "key": "pad7_punch",
         "name": "HH Closed Punch",
         "type": "int",
         "min": 0,
@@ -1035,7 +1179,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_noise",
+        "key": "pad7_noise",
         "name": "HH Closed Tone/Nse",
         "type": "int",
         "min": 0,
@@ -1044,7 +1188,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_click",
+        "key": "pad7_click",
         "name": "HH Closed Click",
         "type": "int",
         "min": 0,
@@ -1053,7 +1197,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_volume",
+        "key": "pad7_volume",
         "name": "HH Closed Volume",
         "type": "int",
         "min": -60,
@@ -1062,7 +1206,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice6_pan",
+        "key": "pad7_pan",
         "name": "HH Closed Pan",
         "type": "int",
         "min": -100,
@@ -1071,7 +1215,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_vel_vol",
+        "key": "pad7_vel_vol",
         "name": "HH Closed Vel Vol",
         "type": "int",
         "min": 0,
@@ -1080,7 +1224,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_sat",
+        "key": "pad7_sat",
         "name": "HH Closed Sat",
         "type": "int",
         "min": 0,
@@ -1089,7 +1233,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_reverb",
+        "key": "pad7_reverb",
         "name": "HH Closed Reverb",
         "type": "int",
         "min": 0,
@@ -1098,7 +1242,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_send_a",
+        "key": "pad7_send_a",
         "name": "HH Closed Send A",
         "type": "int",
         "min": 0,
@@ -1107,7 +1251,7 @@
         "unit": "%"
       },
       {
-        "key": "voice6_send_b",
+        "key": "pad7_send_b",
         "name": "HH Closed Send B",
         "type": "int",
         "min": 0,
@@ -1116,7 +1260,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_pitch",
+        "key": "pad12_pitch",
         "name": "Mid Tom Pitch",
         "type": "int",
         "min": 30,
@@ -1125,7 +1269,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice7_wave",
+        "key": "pad12_wave",
         "name": "Mid Tom Wave",
         "type": "int",
         "min": 0,
@@ -1134,7 +1278,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_bend",
+        "key": "pad12_bend",
         "name": "Mid Tom Bend",
         "type": "int",
         "min": -36,
@@ -1143,7 +1287,7 @@
         "unit": "st"
       },
       {
-        "key": "voice7_bend_dyn",
+        "key": "pad12_bend_dyn",
         "name": "Mid Tom Bend Dyn",
         "type": "int",
         "min": 0,
@@ -1152,7 +1296,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_cutoff",
+        "key": "pad12_cutoff",
         "name": "Mid Tom Cutoff",
         "type": "int",
         "min": 440,
@@ -1161,7 +1305,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice7_res",
+        "key": "pad12_res",
         "name": "Mid Tom Res",
         "type": "int",
         "min": 0,
@@ -1170,7 +1314,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_lp_bend",
+        "key": "pad12_lp_bend",
         "name": "Mid Tom LP Bend",
         "type": "int",
         "min": -36,
@@ -1179,7 +1323,7 @@
         "unit": "st"
       },
       {
-        "key": "voice7_lp_dyn",
+        "key": "pad12_lp_dyn",
         "name": "Mid Tom LP Dyn",
         "type": "int",
         "min": 0,
@@ -1188,7 +1332,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_decay",
+        "key": "pad12_decay",
         "name": "Mid Tom Decay",
         "type": "int",
         "min": 10,
@@ -1197,7 +1341,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice7_punch",
+        "key": "pad12_punch",
         "name": "Mid Tom Punch",
         "type": "int",
         "min": 0,
@@ -1206,7 +1350,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_noise",
+        "key": "pad12_noise",
         "name": "Mid Tom Tone/Nse",
         "type": "int",
         "min": 0,
@@ -1215,7 +1359,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_click",
+        "key": "pad12_click",
         "name": "Mid Tom Click",
         "type": "int",
         "min": 0,
@@ -1224,7 +1368,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_volume",
+        "key": "pad12_volume",
         "name": "Mid Tom Volume",
         "type": "int",
         "min": -60,
@@ -1233,7 +1377,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice7_pan",
+        "key": "pad12_pan",
         "name": "Mid Tom Pan",
         "type": "int",
         "min": -100,
@@ -1242,7 +1386,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_vel_vol",
+        "key": "pad12_vel_vol",
         "name": "Mid Tom Vel Vol",
         "type": "int",
         "min": 0,
@@ -1251,7 +1395,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_sat",
+        "key": "pad12_sat",
         "name": "Mid Tom Sat",
         "type": "int",
         "min": 0,
@@ -1260,7 +1404,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_reverb",
+        "key": "pad12_reverb",
         "name": "Mid Tom Reverb",
         "type": "int",
         "min": 0,
@@ -1269,7 +1413,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_send_a",
+        "key": "pad12_send_a",
         "name": "Mid Tom Send A",
         "type": "int",
         "min": 0,
@@ -1278,7 +1422,7 @@
         "unit": "%"
       },
       {
-        "key": "voice7_send_b",
+        "key": "pad12_send_b",
         "name": "Mid Tom Send B",
         "type": "int",
         "min": 0,
@@ -1287,7 +1431,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_pitch",
+        "key": "pad11_pitch",
         "name": "HH Open Pitch",
         "type": "int",
         "min": 30,
@@ -1296,7 +1440,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice8_wave",
+        "key": "pad11_wave",
         "name": "HH Open Wave",
         "type": "int",
         "min": 0,
@@ -1305,7 +1449,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_bend",
+        "key": "pad11_bend",
         "name": "HH Open Bend",
         "type": "int",
         "min": -36,
@@ -1314,7 +1458,7 @@
         "unit": "st"
       },
       {
-        "key": "voice8_bend_dyn",
+        "key": "pad11_bend_dyn",
         "name": "HH Open Bend Dyn",
         "type": "int",
         "min": 0,
@@ -1323,7 +1467,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_cutoff",
+        "key": "pad11_cutoff",
         "name": "HH Open Cutoff",
         "type": "int",
         "min": 440,
@@ -1332,7 +1476,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice8_res",
+        "key": "pad11_res",
         "name": "HH Open Res",
         "type": "int",
         "min": 0,
@@ -1341,7 +1485,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_lp_bend",
+        "key": "pad11_lp_bend",
         "name": "HH Open LP Bend",
         "type": "int",
         "min": -36,
@@ -1350,7 +1494,7 @@
         "unit": "st"
       },
       {
-        "key": "voice8_lp_dyn",
+        "key": "pad11_lp_dyn",
         "name": "HH Open LP Dyn",
         "type": "int",
         "min": 0,
@@ -1359,7 +1503,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_decay",
+        "key": "pad11_decay",
         "name": "HH Open Decay",
         "type": "int",
         "min": 10,
@@ -1368,7 +1512,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice8_punch",
+        "key": "pad11_punch",
         "name": "HH Open Punch",
         "type": "int",
         "min": 0,
@@ -1377,7 +1521,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_noise",
+        "key": "pad11_noise",
         "name": "HH Open Tone/Nse",
         "type": "int",
         "min": 0,
@@ -1386,7 +1530,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_click",
+        "key": "pad11_click",
         "name": "HH Open Click",
         "type": "int",
         "min": 0,
@@ -1395,7 +1539,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_volume",
+        "key": "pad11_volume",
         "name": "HH Open Volume",
         "type": "int",
         "min": -60,
@@ -1404,7 +1548,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice8_pan",
+        "key": "pad11_pan",
         "name": "HH Open Pan",
         "type": "int",
         "min": -100,
@@ -1413,7 +1557,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_vel_vol",
+        "key": "pad11_vel_vol",
         "name": "HH Open Vel Vol",
         "type": "int",
         "min": 0,
@@ -1422,7 +1566,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_sat",
+        "key": "pad11_sat",
         "name": "HH Open Sat",
         "type": "int",
         "min": 0,
@@ -1431,7 +1575,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_reverb",
+        "key": "pad11_reverb",
         "name": "HH Open Reverb",
         "type": "int",
         "min": 0,
@@ -1440,7 +1584,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_send_a",
+        "key": "pad11_send_a",
         "name": "HH Open Send A",
         "type": "int",
         "min": 0,
@@ -1449,7 +1593,7 @@
         "unit": "%"
       },
       {
-        "key": "voice8_send_b",
+        "key": "pad11_send_b",
         "name": "HH Open Send B",
         "type": "int",
         "min": 0,
@@ -1458,7 +1602,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_pitch",
+        "key": "pad9_pitch",
         "name": "High Tom Pitch",
         "type": "int",
         "min": 30,
@@ -1467,7 +1611,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice9_wave",
+        "key": "pad9_wave",
         "name": "High Tom Wave",
         "type": "int",
         "min": 0,
@@ -1476,7 +1620,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_bend",
+        "key": "pad9_bend",
         "name": "High Tom Bend",
         "type": "int",
         "min": -36,
@@ -1485,7 +1629,7 @@
         "unit": "st"
       },
       {
-        "key": "voice9_bend_dyn",
+        "key": "pad9_bend_dyn",
         "name": "High Tom Bend Dyn",
         "type": "int",
         "min": 0,
@@ -1494,7 +1638,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_cutoff",
+        "key": "pad9_cutoff",
         "name": "High Tom Cutoff",
         "type": "int",
         "min": 440,
@@ -1503,7 +1647,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice9_res",
+        "key": "pad9_res",
         "name": "High Tom Res",
         "type": "int",
         "min": 0,
@@ -1512,7 +1656,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_lp_bend",
+        "key": "pad9_lp_bend",
         "name": "High Tom LP Bend",
         "type": "int",
         "min": -36,
@@ -1521,7 +1665,7 @@
         "unit": "st"
       },
       {
-        "key": "voice9_lp_dyn",
+        "key": "pad9_lp_dyn",
         "name": "High Tom LP Dyn",
         "type": "int",
         "min": 0,
@@ -1530,7 +1674,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_decay",
+        "key": "pad9_decay",
         "name": "High Tom Decay",
         "type": "int",
         "min": 10,
@@ -1539,7 +1683,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice9_punch",
+        "key": "pad9_punch",
         "name": "High Tom Punch",
         "type": "int",
         "min": 0,
@@ -1548,7 +1692,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_noise",
+        "key": "pad9_noise",
         "name": "High Tom Tone/Nse",
         "type": "int",
         "min": 0,
@@ -1557,7 +1701,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_click",
+        "key": "pad9_click",
         "name": "High Tom Click",
         "type": "int",
         "min": 0,
@@ -1566,7 +1710,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_volume",
+        "key": "pad9_volume",
         "name": "High Tom Volume",
         "type": "int",
         "min": -60,
@@ -1575,7 +1719,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice9_pan",
+        "key": "pad9_pan",
         "name": "High Tom Pan",
         "type": "int",
         "min": -100,
@@ -1584,7 +1728,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_vel_vol",
+        "key": "pad9_vel_vol",
         "name": "High Tom Vel Vol",
         "type": "int",
         "min": 0,
@@ -1593,7 +1737,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_sat",
+        "key": "pad9_sat",
         "name": "High Tom Sat",
         "type": "int",
         "min": 0,
@@ -1602,7 +1746,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_reverb",
+        "key": "pad9_reverb",
         "name": "High Tom Reverb",
         "type": "int",
         "min": 0,
@@ -1611,7 +1755,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_send_a",
+        "key": "pad9_send_a",
         "name": "High Tom Send A",
         "type": "int",
         "min": 0,
@@ -1620,7 +1764,7 @@
         "unit": "%"
       },
       {
-        "key": "voice9_send_b",
+        "key": "pad9_send_b",
         "name": "High Tom Send B",
         "type": "int",
         "min": 0,
@@ -1629,7 +1773,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_pitch",
+        "key": "pad14_pitch",
         "name": "Cymbal Pitch",
         "type": "int",
         "min": 30,
@@ -1638,7 +1782,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice10_wave",
+        "key": "pad14_wave",
         "name": "Cymbal Wave",
         "type": "int",
         "min": 0,
@@ -1647,7 +1791,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_bend",
+        "key": "pad14_bend",
         "name": "Cymbal Bend",
         "type": "int",
         "min": -36,
@@ -1656,7 +1800,7 @@
         "unit": "st"
       },
       {
-        "key": "voice10_bend_dyn",
+        "key": "pad14_bend_dyn",
         "name": "Cymbal Bend Dyn",
         "type": "int",
         "min": 0,
@@ -1665,7 +1809,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_cutoff",
+        "key": "pad14_cutoff",
         "name": "Cymbal Cutoff",
         "type": "int",
         "min": 440,
@@ -1674,7 +1818,7 @@
         "unit": "hz"
       },
       {
-        "key": "voice10_res",
+        "key": "pad14_res",
         "name": "Cymbal Res",
         "type": "int",
         "min": 0,
@@ -1683,7 +1827,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_lp_bend",
+        "key": "pad14_lp_bend",
         "name": "Cymbal LP Bend",
         "type": "int",
         "min": -36,
@@ -1692,7 +1836,7 @@
         "unit": "st"
       },
       {
-        "key": "voice10_lp_dyn",
+        "key": "pad14_lp_dyn",
         "name": "Cymbal LP Dyn",
         "type": "int",
         "min": 0,
@@ -1701,7 +1845,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_decay",
+        "key": "pad14_decay",
         "name": "Cymbal Decay",
         "type": "int",
         "min": 10,
@@ -1710,7 +1854,7 @@
         "unit": "ms"
       },
       {
-        "key": "voice10_punch",
+        "key": "pad14_punch",
         "name": "Cymbal Punch",
         "type": "int",
         "min": 0,
@@ -1719,7 +1863,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_noise",
+        "key": "pad14_noise",
         "name": "Cymbal Tone/Nse",
         "type": "int",
         "min": 0,
@@ -1728,7 +1872,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_click",
+        "key": "pad14_click",
         "name": "Cymbal Click",
         "type": "int",
         "min": 0,
@@ -1737,7 +1881,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_volume",
+        "key": "pad14_volume",
         "name": "Cymbal Volume",
         "type": "int",
         "min": -60,
@@ -1746,7 +1890,7 @@
         "unit": "dB"
       },
       {
-        "key": "voice10_pan",
+        "key": "pad14_pan",
         "name": "Cymbal Pan",
         "type": "int",
         "min": -100,
@@ -1755,7 +1899,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_vel_vol",
+        "key": "pad14_vel_vol",
         "name": "Cymbal Vel Vol",
         "type": "int",
         "min": 0,
@@ -1764,7 +1908,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_sat",
+        "key": "pad14_sat",
         "name": "Cymbal Sat",
         "type": "int",
         "min": 0,
@@ -1773,7 +1917,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_reverb",
+        "key": "pad14_reverb",
         "name": "Cymbal Reverb",
         "type": "int",
         "min": 0,
@@ -1782,7 +1926,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_send_a",
+        "key": "pad14_send_a",
         "name": "Cymbal Send A",
         "type": "int",
         "min": 0,
@@ -1791,7 +1935,7 @@
         "unit": "%"
       },
       {
-        "key": "voice10_send_b",
+        "key": "pad14_send_b",
         "name": "Cymbal Send B",
         "type": "int",
         "min": 0,
@@ -1812,15 +1956,15 @@
               "label": "Kit"
             },
             {
-              "level": "voices",
+              "level": "pads",
               "label": "Tone"
             },
             {
-              "level": "voice_noise",
+              "level": "pad_noise",
               "label": "Noise"
             },
             {
-              "level": "voice_mix",
+              "level": "pad_mix",
               "label": "Mix"
             },
             {
@@ -1835,38 +1979,51 @@
           "count_param": "preset_count",
           "name_param": "preset_name"
         },
-        "voices": {
+        "pads": {
           "name": "Tone",
-          "child_prefix": "voice",
-          "child_count": 10,
+          "child_prefix": "pad",
+          "child_count": 16,
           "child_index_base": 1,
-          "child_label": "Voice",
-          "child_index_param": "ui_current_voice",
+          "child_label": "Pad",
+          "child_index_param": "ui_current_pad",
           "child_names": [
             "Kick",
-            "Rimshot",
+            "Rim",
             "Snare",
+            "Snare 2",
             "Clap",
-            "Low Tom",
-            "HH Closed",
-            "Mid Tom",
+            "Lo Tom",
+            "HH Cl",
+            "HH Cl 2",
+            "Hi Tom",
+            "Lo Tom 2",
             "HH Open",
-            "High Tom",
-            "Cymbal"
+            "Mid Tom",
+            "Hi Tom 2",
+            "Cymbal",
+            "Cymbal 2",
+            "Mid Tom2"
           ],
           "child_roles": [
             "kick",
             "rim",
             "snare",
+            "snare",
             "clap",
             "tom",
             "hihat_closed",
+            "hihat_closed",
+            "tom",
             "tom",
             "hihat_open",
             "tom",
-            "cymbal"
+            "tom",
+            "cymbal",
+            "cymbal",
+            "tom"
           ],
           "child_copy_keys": [
+            "tune",
             "pitch",
             "wave",
             "bend",
@@ -1888,75 +2045,94 @@
             "send_b"
           ],
           "child_key_overrides": {
-            "ui_current_voice": "ui_current_voice"
+            "ui_current_pad": "ui_current_pad"
           },
           "child_notes": [
             36,
             37,
             38,
             39,
+            40,
             41,
             42,
+            43,
+            44,
             45,
             46,
+            47,
             48,
-            49
+            49,
+            50,
+            51
           ],
           "child_press_param": "ui_live_press",
           "child_press_note_param": "ui_live_note",
           "knobs": [
-            "ui_current_voice",
+            "ui_current_pad",
+            "tune",
             "pitch",
             "wave",
             "bend",
             "bend_dyn",
             "decay",
-            "punch",
-            "noise"
+            "punch"
           ],
           "params": [
-            "ui_current_voice",
+            "ui_current_pad",
+            "tune",
             "pitch",
             "wave",
             "bend",
             "bend_dyn",
             "decay",
-            "punch",
-            "noise"
+            "punch"
           ]
         },
-        "voice_noise": {
+        "pad_noise": {
           "name": "Noise",
-          "child_prefix": "voice",
-          "child_count": 10,
+          "child_prefix": "pad",
+          "child_count": 16,
           "child_index_base": 1,
-          "child_label": "Voice",
-          "child_index_param": "ui_current_voice",
+          "child_label": "Pad",
+          "child_index_param": "ui_current_pad",
           "child_names": [
             "Kick",
-            "Rimshot",
+            "Rim",
             "Snare",
+            "Snare 2",
             "Clap",
-            "Low Tom",
-            "HH Closed",
-            "Mid Tom",
+            "Lo Tom",
+            "HH Cl",
+            "HH Cl 2",
+            "Hi Tom",
+            "Lo Tom 2",
             "HH Open",
-            "High Tom",
-            "Cymbal"
+            "Mid Tom",
+            "Hi Tom 2",
+            "Cymbal",
+            "Cymbal 2",
+            "Mid Tom2"
           ],
           "child_roles": [
             "kick",
             "rim",
             "snare",
+            "snare",
             "clap",
             "tom",
             "hihat_closed",
+            "hihat_closed",
+            "tom",
             "tom",
             "hihat_open",
             "tom",
-            "cymbal"
+            "tom",
+            "cymbal",
+            "cymbal",
+            "tom"
           ],
           "child_copy_keys": [
+            "tune",
             "pitch",
             "wave",
             "bend",
@@ -1978,13 +2154,14 @@
             "send_b"
           ],
           "child_key_overrides": {
-            "ui_current_voice": "ui_current_voice"
+            "ui_current_pad": "ui_current_pad"
           },
           "knobs": [
             "cutoff",
             "res",
             "lp_bend",
             "lp_dyn",
+            "noise",
             "click"
           ],
           "params": [
@@ -1992,41 +2169,55 @@
             "res",
             "lp_bend",
             "lp_dyn",
+            "noise",
             "click"
           ]
         },
-        "voice_mix": {
+        "pad_mix": {
           "name": "Mix",
-          "child_prefix": "voice",
-          "child_count": 10,
+          "child_prefix": "pad",
+          "child_count": 16,
           "child_index_base": 1,
-          "child_label": "Voice",
-          "child_index_param": "ui_current_voice",
+          "child_label": "Pad",
+          "child_index_param": "ui_current_pad",
           "child_names": [
             "Kick",
-            "Rimshot",
+            "Rim",
             "Snare",
+            "Snare 2",
             "Clap",
-            "Low Tom",
-            "HH Closed",
-            "Mid Tom",
+            "Lo Tom",
+            "HH Cl",
+            "HH Cl 2",
+            "Hi Tom",
+            "Lo Tom 2",
             "HH Open",
-            "High Tom",
-            "Cymbal"
+            "Mid Tom",
+            "Hi Tom 2",
+            "Cymbal",
+            "Cymbal 2",
+            "Mid Tom2"
           ],
           "child_roles": [
             "kick",
             "rim",
             "snare",
+            "snare",
             "clap",
             "tom",
             "hihat_closed",
+            "hihat_closed",
+            "tom",
             "tom",
             "hihat_open",
             "tom",
-            "cymbal"
+            "tom",
+            "cymbal",
+            "cymbal",
+            "tom"
           ],
           "child_copy_keys": [
+            "tune",
             "pitch",
             "wave",
             "bend",
@@ -2048,7 +2239,7 @@
             "send_b"
           ],
           "child_key_overrides": {
-            "ui_current_voice": "ui_current_voice"
+            "ui_current_pad": "ui_current_pad"
           },
           "knobs": [
             "volume",

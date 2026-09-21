@@ -9,8 +9,9 @@
  * stale or missing block here looks perfect on screen and is a set of dead
  * modulation destinations.
  *
- * Generated, not hand-copied: the wrapper's kUiHierarchy, VOICE_PARAMS[] and
- * GLOBAL_PARAMS[] are the single source of truth, and a duplicate would drift
+ * Generated, not hand-copied: the wrapper's kUiHierarchy, PADS[],
+ * VOICE_PARAMS[], PAD_PARAMS[] and GLOBAL_PARAMS[] are the single source of
+ * truth, and a duplicate would drift
  * the moment a level is renamed or a parameter added. tests/simian_test.cpp
  * asserts that what lands here is byte-identical to what the compiled wrapper
  * serves, which is the guard against this file's own parsing going stale.
@@ -62,24 +63,51 @@ function parseTable(name) {
   return rows;
 }
 
-const voices = [...src.matchAll(/\{"(voice\d+)",\s*"([^"]+)",\s*(\d+),\s*"([^"]+)"\}/g)]
-  .map((m) => ({ id: m[1], label: m[2] }));
-if (voices.length !== 10) { console.error(`expected 10 voices, parsed ${voices.length}`); process.exit(1); }
+/* PADS[] carries the ids, and an id is what every parameter key is prefixed
+ * with. Sixteen pads over ten voices: the alias pads share their parent's
+ * voice parameters and own only `tune`. */
+const pads = [...src.matchAll(
+  /\{"(pad\d+)",\s*"([^"]+)",\s*(V_\w+),\s*(\d+),\s*(-?[\d.]+)f,\s*(\d+)\}/g)]
+  .map((m) => ({ id: m[1], label: m[2], voice: m[3], note: +m[4], tune: +m[5] }));
+if (pads.length !== 16) { console.error(`expected 16 pads, parsed ${pads.length}`); process.exit(1); }
 
-const entry = (key, name, p) => {
+/* The voice LABELS, in declaration order, so a shared parameter is named
+ * after the drum rather than after whichever pad happens to own it. */
+const voiceBlock = src.match(/static const voice_def_t VOICES\[SIMIAN_VOICES\] = \{([\s\S]*?)\n\};/);
+if (!voiceBlock) { console.error("could not find VOICES[] in the wrapper"); process.exit(1); }
+const voiceLabels = [...voiceBlock[1].matchAll(/\{"([^"]+)",\s*"([^"]+)"\}/g)].map((m) => m[1]);
+if (voiceLabels.length !== 10) {
+  console.error(`expected 10 voices, parsed ${voiceLabels.length}`); process.exit(1);
+}
+/* V_KICK.. in the order VOICES[] declares them — the enum the pad table
+ * points through. */
+const VOICE_ORDER = ["V_KICK", "V_RIM", "V_SNARE", "V_CLAP", "V_LOWTOM",
+                     "V_HHCLOSED", "V_MIDTOM", "V_HHOPEN", "V_HITOM", "V_CYMBAL"];
+
+const entry = (key, name, p, def = p.def) => {
   const o = { key, name, type: "int", min: Math.trunc(p.min), max: Math.trunc(p.max),
-              default: Math.trunc(p.def) };
+              default: Math.trunc(def) };
   if (p.unit) o.unit = p.unit;
   return o;
 };
 
+/* Exactly build_chain_params' order: globals, the focus knob, every pad's
+ * tune, then each voice's parameters once under the pad that owns it. */
 const chainParams = [
   ...parseTable("GLOBAL_PARAMS").map((p) => entry(p.key, p.name, p)),
   ...parseTable("UI_PARAMS").map((p) => entry(p.key, p.name, p)),
 ];
+const pparams = parseTable("PAD_PARAMS");
+for (const d of pads)
+  for (const p of pparams) chainParams.push(entry(`${d.id}_${p.key}`, `${d.label} ${p.name}`, p, d.tune));
+
 const vparams = parseTable("VOICE_PARAMS");
-for (const v of voices)
-  for (const p of vparams) chainParams.push(entry(`${v.id}_${p.key}`, `${v.label} ${p.name}`, p));
+for (let v = 0; v < VOICE_ORDER.length; v++) {
+  const owner = pads.find((d) => d.voice === VOICE_ORDER[v]);
+  if (!owner) { console.error(`no pad owns ${VOICE_ORDER[v]}`); process.exit(1); }
+  for (const p of vparams)
+    chainParams.push(entry(`${owner.id}_${p.key}`, `${voiceLabels[v]} ${p.name}`, p));
+}
 
 /* The host refuses a module.json over 64 KB and stops building the table at
  * MAX_CHAIN_PARAMS (256). Both are silent in production; fail here instead. */

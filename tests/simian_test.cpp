@@ -4,18 +4,19 @@
  *   ./scripts/test.sh
  *
  * The wrapper is #included rather than linked so the tests can reach the
- * static tables (VOICE_PARAMS, VOICES, SIMIAN_FACTORY) the module's behaviour
+ * static tables (PADS, VOICE_PARAMS, SIMIAN_FACTORY) the module's behaviour
  * is defined by. Everything here is reachable without a device: the DSP is
- * deterministic and needs no audio hardware, so "does this note make a sound
+ * deterministic and needs no audio hardware, so "does this pad make a sound
  * on THAT voice" is a real assertion and not a stand-in for playing it.
  */
 #include "../src/dsp/simian_plugin.cpp"
 
 #include <cstdio>
+#include <cstdarg>
 #include <cmath>
 #include <string>
 #include <vector>
-#include <cstdarg>
+#include <algorithm>
 
 static int g_fail = 0;
 static int g_checks = 0;
@@ -63,17 +64,6 @@ static float render_peak(plugin_api_v2_t *api, void *inst, int ms) {
     return peak;
 }
 
-/* ---- a minimal JSON reader, enough to walk what the wrapper serves ---- */
-static std::string json_field(const std::string &s, size_t from, const char *key) {
-    std::string pat = std::string("\"") + key + "\":";
-    size_t p = s.find(pat, from);
-    if (p == std::string::npos) return "";
-    p += pat.size();
-    if (s[p] == '"') { size_t e = s.find('"', p + 1); return s.substr(p + 1, e - p - 1); }
-    size_t e = s.find_first_of(",}]", p);
-    return s.substr(p, e - p);
-}
-
 static std::string read_file(const char *path) {
     FILE *f = fopen(path, "rb");
     if (!f) return "";
@@ -91,8 +81,9 @@ int main(void) {
 
     /* ================= tables ================= */
     printf("\ntables:\n");
-    ok(VP_COUNT == 19, "19 parameters per voice");
-    ok(SIMIAN_VOICES == 10, "ten voices");
+    ok(VP_COUNT == 19, "19 shared parameters per voice");
+    ok(PP_COUNT == 1, "one parameter belongs to the pad (Tune)");
+    ok(SIMIAN_VOICES == 10 && SIMIAN_PADS == 16, "ten voices on sixteen pads");
     ok(SIMIAN_FACTORY_COUNT == 35, "35 factory kits");
     ok(SIMIAN_FACTORY_VPARAMS == VP_COUNT,
        "factory bank width matches VOICE_PARAMS[] — a mismatch loads every value one slot out");
@@ -100,35 +91,70 @@ int main(void) {
     ok(SIMIAN_FACTORY_VOICES == SIMIAN_VOICES, "factory bank has a row per voice");
 
     /* The id is what the host substitutes into "{id}_send_a"; if it stops
-     * being "voice" + the 1-based index, every send lands on its neighbour. */
+     * being "pad" + the 1-based index, every send lands on its neighbour. */
     {
-        bool idsok = true;
-        for (int v = 0; v < SIMIAN_VOICES; v++) {
+        bool idsok = true, notesok = true, voicesok = true;
+        for (int d = 0; d < SIMIAN_PADS; d++) {
             char want[16];
-            snprintf(want, sizeof(want), "voice%d", v + 1);
-            if (strcmp(VOICES[v].id, want) != 0) idsok = false;
+            snprintf(want, sizeof(want), "pad%d", d + 1);
+            if (strcmp(PADS[d].id, want) != 0) idsok = false;
+            if (PADS[d].note != 36 + d) notesok = false;
+            if (PADS[d].voice < 0 || PADS[d].voice >= SIMIAN_VOICES) voicesok = false;
         }
-        ok(idsok, "voice ids are voice1..voice10, 1-based, matching child_index_base");
+        ok(idsok, "pad ids are pad1..pad16, 1-based, matching child_index_base");
+        ok(notesok, "pads are notes 36..51, contiguous — Move's drum grid");
+        ok(voicesok, "every pad names a real voice");
     }
     {
-        bool ascending = true;
-        for (int v = 1; v < SIMIAN_VOICES; v++)
-            if (VOICES[v].note <= VOICES[v - 1].note) ascending = false;
-        ok(ascending, "voices are declared in ascending note order");
+        int seen[SIMIAN_VOICES] = {0};
+        for (int d = 0; d < SIMIAN_PADS; d++) seen[PADS[d].voice]++;
+        bool all = true, tally = true;
+        for (int v = 0; v < SIMIAN_VOICES; v++) if (!seen[v]) all = false;
+        ok(all, "every voice has at least one pad");
+        int pairs = 0;
+        for (int v = 0; v < SIMIAN_VOICES; v++) {
+            if (seen[v] > 2) tally = false;
+            if (seen[v] == 2) pairs++;
+        }
+        ok(tally, "no voice has more than two pads");
+        okf(pairs == 6, "six voices carry an alias pad (%d)", pairs);
+        ok(seen[V_SNARE] == 2 && seen[V_LOWTOM] == 2 && seen[V_MIDTOM] == 2 &&
+           seen[V_HITOM] == 2,
+           "the snare and all three toms keep the alias upstream gives them");
     }
     {
-        /* Every note upstream routes must reach a voice, and the two
-         * choke-only notes must NOT be in the map. */
-        bool allmapped = true;
-        for (int i = 0; i < NOTE_MAP_COUNT; i++)
-            if (NOTE_MAP[i].voice < 0 || NOTE_MAP[i].voice >= SIMIAN_VOICES) allmapped = false;
-        ok(allmapped, "every note map entry names a real voice");
-        ok(note_to_voice(NOTE_PEDAL_HIHAT) < 0, "pedal hihat plays nothing (it only chokes)");
-        ok(note_to_voice(NOTE_RIDE) < 0, "ride plays nothing (it only chokes the cymbal)");
-        bool primaries = true;
-        for (int v = 0; v < SIMIAN_VOICES; v++)
-            if (note_to_voice(VOICES[v].note) != v) primaries = false;
-        ok(primaries, "each voice's own note routes to it");
+        /* The whole point of the re-seating: an alias must be NEXT TO its
+         * parent on the 4-wide grid — ±1 within a row, or ±4. */
+        bool adjacent = true;
+        for (int d = 0; d < SIMIAN_PADS; d++)
+            for (int e = d + 1; e < SIMIAN_PADS; e++) {
+                if (PADS[d].voice != PADS[e].voice) continue;
+                int gap = e - d;
+                bool same_row = (gap == 1) && (d / 4 == e / 4);
+                bool stacked  = (gap == 4);
+                if (!same_row && !stacked) {
+                    printf("        %s and %s share a voice but do not touch\n",
+                           PADS[d].label, PADS[e].label);
+                    adjacent = false;
+                }
+            }
+        ok(adjacent, "every alias pad touches its parent on the grid");
+    }
+    {
+        /* An alias with tune 0 is the duplicate this design exists to avoid. */
+        bool tuned = true;
+        for (int d = 0; d < SIMIAN_PADS; d++) {
+            int owner = voice_owner_pad(PADS[d].voice);
+            if (owner != d && PADS[d].tune == 0.0f) {
+                printf("        %s is an alias with no default tune\n", PADS[d].label);
+                tuned = false;
+            }
+            if (owner == d && PADS[d].tune != 0.0f) {
+                printf("        %s owns its voice but is detuned\n", PADS[d].label);
+                tuned = false;
+            }
+        }
+        ok(tuned, "every alias ships with a nonzero Tune, every parent with zero");
     }
 
     /* ================= instance ================= */
@@ -161,27 +187,42 @@ int main(void) {
            "Trigger / Choke / key resolved");
     }
 
-    /* ================= params ================= */
+    /* ================= params: pad vs voice ================= */
     printf("\nparams:\n");
-    api->set_param(inst, "voice1_pitch", "55");
-    ok(get(api, inst, "voice1_pitch") == "55.000", "prefixed key round-trips");
+    api->set_param(inst, "pad1_pitch", "55");
+    ok(get(api, inst, "pad1_pitch") == "55.000", "prefixed key round-trips");
     ok(*S->voice[V_KICK].zone[find_voice_param("pitch")] == 55.0f, "…and reaches the Faust zone");
-    api->set_param(inst, "voice10_pitch", "1000");
-    ok(get(api, inst, "voice10_pitch") == "1000.000", "two-digit voice index parses");
-    ok(get(api, inst, "voice1_pitch") == "55.000", "…without touching voice1");
+    api->set_param(inst, "pad16_pitch", "1000");
+    ok(get(api, inst, "pad16_pitch") == "1000.000", "two-digit pad index parses");
+    ok(get(api, inst, "pad1_pitch") == "55.000", "…without touching pad1");
 
-    api->set_param(inst, "ui_current_voice", "3");
-    ok(get(api, inst, "ui_current_voice") == "3", "focus is 1-based on the wire");
-    api->set_param(inst, "decay", "777");
-    ok(get(api, inst, "voice3_decay") == "777.000", "a bare key edits the FOCUSED voice");
+    /* The sharing, stated as a test: pad3 and pad4 are one snare. */
+    api->set_param(inst, "pad3_decay", "321");
+    ok(get(api, inst, "pad4_decay") == "321.000",
+       "an alias SHARES its parent's voice parameters (one snare, two pads)");
+    api->set_param(inst, "pad4_decay", "654");
+    ok(get(api, inst, "pad3_decay") == "654.000", "…and the sharing goes both ways");
 
-    api->set_param(inst, "voice1_pitch", "99999");
-    ok(get(api, inst, "voice1_pitch") == "4400.000", "out-of-range is clamped, not wrapped");
-    ok(api->get_param(inst, "no_such_param", (char *)"", 0) < 0 ||
-       get(api, inst, "no_such_param") == "<err>",
+    /* Tune is the one thing it does not share. */
+    api->set_param(inst, "pad4_tune", "5");
+    ok(get(api, inst, "pad4_tune") == "5.000", "tune round-trips");
+    ok(get(api, inst, "pad3_tune") == "0.000", "…and belongs to the PAD, not the voice");
+    api->set_param(inst, "pad4_tune", "999");
+    ok(get(api, inst, "pad4_tune") == "24.000", "tune is clamped to its declared range");
+
+    api->set_param(inst, "ui_current_pad", "12");
+    ok(get(api, inst, "ui_current_pad") == "12", "focus is 1-based on the wire");
+    api->set_param(inst, "punch", "44");
+    ok(get(api, inst, "pad12_punch") == "44.000", "a bare key edits the FOCUSED pad");
+    api->set_param(inst, "tune", "3");
+    ok(get(api, inst, "pad12_tune") == "3.000", "…including its tune");
+
+    api->set_param(inst, "pad1_pitch", "99999");
+    ok(get(api, inst, "pad1_pitch") == "4400.000", "out-of-range is clamped, not wrapped");
+    ok(get(api, inst, "no_such_param") == "<err>",
        "an unknown key answers NEGATIVE, never an empty value");
-    ok(get(api, inst, "voice11_pitch") == "<err>", "an out-of-range voice index is not a param");
-    ok(get(api, inst, "voice0_pitch") == "<err>", "voice0 does not exist (ids are 1-based)");
+    ok(get(api, inst, "pad17_pitch") == "<err>", "an out-of-range pad index is not a param");
+    ok(get(api, inst, "pad0_pitch") == "<err>", "pad0 does not exist (ids are 1-based)");
 
     /* ================= presets ================= */
     printf("\npresets:\n");
@@ -197,16 +238,23 @@ int main(void) {
 
     /* ================= state ================= */
     printf("\nstate:\n");
-    api->set_param(inst, "voice6_cutoff", "1234");
+    api->set_param(inst, "pad7_cutoff", "1234");
+    api->set_param(inst, "pad15_tune", "-9");
     api->set_param(inst, "gain", "-12");
     std::string blob = get(api, inst, "state");
-    ok(blob.find("\"voice6_cutoff\":1234") != std::string::npos, "state carries every voice key");
+    ok(blob.find("\"pad7_cutoff\":1234") != std::string::npos,
+       "state carries a voice parameter under the pad that owns it");
+    ok(blob.find("\"pad8_cutoff\"") == std::string::npos,
+       "…and NOT under the alias, which would be one value written twice");
+    ok(blob.find("\"pad15_tune\":-9") != std::string::npos, "state carries every pad's tune");
     ok(blob.find("\"gain\":-12") != std::string::npos, "state carries the globals");
     {
         void *b = api->create_instance(".", blob.c_str());
-        ok(get(api, b, "voice6_cutoff") == "1234.000", "state restores a per-voice value");
+        ok(get(api, b, "pad7_cutoff") == "1234.000", "state restores a shared value");
+        ok(get(api, b, "pad8_cutoff") == "1234.000", "…visible from the alias too");
+        ok(get(api, b, "pad15_tune") == "-9.000", "state restores a pad tune");
         ok(get(api, b, "gain") == "-12.000", "state restores a global");
-        ok(get(api, b, "ui_current_voice") == "3", "state restores the focused voice");
+        ok(get(api, b, "ui_current_pad") == "12", "state restores the focused pad");
         api->destroy_instance(b);
     }
 
@@ -216,14 +264,22 @@ int main(void) {
     {
         bool allthere = true;
         for (int v = 0; v < SIMIAN_VOICES; v++) {
-            std::string want = std::string("\"id\":\"") + VOICES[v].id + "\"";
+            std::string want = std::string("\"id\":\"") + PADS[voice_owner_pad(v)].id + "\"";
             if (sv.find(want) == std::string::npos) allthere = false;
         }
-        ok(allthere, "split_voices publishes all ten ids");
-        /* Order is the buffer contract: entry i IS buffer i. */
+        ok(allthere, "split_voices publishes the ten owning pads");
+
+        bool no_alias = true;
+        for (int d = 0; d < SIMIAN_PADS; d++) {
+            if (voice_owner_pad(PADS[d].voice) == d) continue;
+            std::string nope = std::string("\"id\":\"") + PADS[d].id + "\"";
+            if (sv.find(nope) != std::string::npos) no_alias = false;
+        }
+        ok(no_alias, "an alias pad is NOT published as a voice of its own");
+
         size_t at = 0; bool ordered = true;
         for (int v = 0; v < SIMIAN_VOICES; v++) {
-            std::string want = std::string("\"id\":\"") + VOICES[v].id + "\"";
+            std::string want = std::string("\"id\":\"") + PADS[voice_owner_pad(v)].id + "\"";
             size_t p = sv.find(want, at);
             if (p == std::string::npos) { ordered = false; break; }
             at = p;
@@ -231,14 +287,12 @@ int main(void) {
         ok(ordered, "split_voices is in VOICES[] order — entry i is buffer i");
     }
     {
-        /* Each declared send template, substituted with each id, must address
-         * a real parameter. This is the check that catches a base-off-by-one. */
         std::string tpl = get(api, inst, "voice_send_params");
         ok(tpl == "[\"{id}_send_a\",\"{id}_send_b\"]", "two send templates, A then B");
         bool resolves = true;
         for (int v = 0; v < SIMIAN_VOICES; v++)
-            for (const char *s : {"_send_a", "_send_b"}) {
-                std::string k = std::string(VOICES[v].id) + s;
+            for (const char *sfx : {"_send_a", "_send_b"}) {
+                std::string k = std::string(PADS[voice_owner_pad(v)].id) + sfx;
                 if (get(api, inst, k.c_str()) == "<err>") resolves = false;
             }
         ok(resolves, "every {id}_send_a / _send_b substitution addresses a real param");
@@ -249,29 +303,25 @@ int main(void) {
     {
         std::string h = get(api, inst, "ui_hierarchy");
         ok(h.find("\"pad_layout\":\"drums\"") != std::string::npos, "pad_layout says drums");
-        /* 🔴 The note map must be on exactly ONE level: voicesOf emits a voice
-         * per child of every level that declares one, so two levels publish
-         * twenty voices and seat two copies of the kit — and the pages still
-         * render perfectly. */
         int notemaps = 0;
         for (size_t p = h.find("child_notes"); p != std::string::npos;
              p = h.find("child_notes", p + 1)) notemaps++;
         for (size_t p = h.find("child_note_base"); p != std::string::npos;
              p = h.find("child_note_base", p + 1)) notemaps++;
         ok(notemaps == 1, "exactly one level declares a note map");
+        ok(h.find("\"child_count\":16") != std::string::npos, "the child level has sixteen pads");
 
         /* ⚠ A key repeated across levels makes the loader drop ALL of its
          * metadata, which silently kills the per-voice sends. */
-        std::vector<std::string> seen;
         int dup = 0;
-        for (int i = 0; i < VP_COUNT; i++) {
-            std::string pat = std::string("\"") + VOICE_PARAMS[i].key + "\"";
+        const char *lv[] = {"\"pads\"", "\"pad_noise\"", "\"pad_mix\""};
+        for (int i = 0; i < VP_COUNT + PP_COUNT; i++) {
+            const char *k = (i < VP_COUNT) ? VOICE_PARAMS[i].key : PAD_PARAMS[i - VP_COUNT].key;
+            std::string pat = std::string("\"") + k + "\"";
             int levels_with = 0;
-            const char *lv[] = {"\"voices\"", "\"voice_noise\"", "\"voice_mix\""};
             for (int L = 0; L < 3; L++) {
                 size_t start = h.find(lv[L]);
                 if (start == std::string::npos) continue;
-                /* the level's own span: up to the next level key or the end */
                 size_t end = h.size();
                 for (int M = 0; M < 3; M++) {
                     size_t o = h.find(lv[M], start + 1);
@@ -280,19 +330,14 @@ int main(void) {
                 size_t o = h.find("\"output\"", start + 1);
                 if (o != std::string::npos && o < end) end = o;
                 std::string span = h.substr(start, end - start);
-                /* child_copy_keys lists every key on every level by design. */
-                size_t ck = span.find("child_copy_keys");
-                if (ck != std::string::npos) {
-                    size_t cke = span.find(']', ck);
-                    span.erase(ck, cke - ck);
-                }
+                size_t ck = span.find("child_copy_keys");   /* lists everything by design */
+                if (ck != std::string::npos) span.erase(ck, span.find(']', ck) - ck);
                 if (span.find(pat) != std::string::npos) levels_with++;
             }
-            if (levels_with > 1) { dup++; printf("        duplicated key: %s\n", VOICE_PARAMS[i].key); }
+            if (levels_with > 1) { dup++; printf("        duplicated key: %s\n", k); }
         }
-        ok(dup == 0, "no voice key appears on two levels");
+        ok(dup == 0, "no pad or voice key appears on two levels");
 
-        /* Every knob must name a declared param, or it is a dead control. */
         int dead = 0;
         for (size_t p = h.find("\"knobs\":["); p != std::string::npos;
              p = h.find("\"knobs\":[", p + 1)) {
@@ -303,15 +348,28 @@ int main(void) {
                 size_t r = arr.find('"', q + 1);
                 std::string k = arr.substr(q + 1, r - q - 1);
                 q = r + 1;
-                if (k.empty()) continue;             /* a deliberate gap */
-                if (k == "ui_current_voice") continue;
-                if (find_voice_param(k.c_str()) < 0 && find_global_param(k.c_str()) < 0) {
+                if (k.empty() || k == "ui_current_pad") continue;
+                if (find_voice_param(k.c_str()) < 0 && find_global_param(k.c_str()) < 0 &&
+                    find_pad_param(k.c_str()) < 0) {
                     printf("        knob with no param: %s\n", k.c_str());
                     dead++;
                 }
             }
         }
         ok(dead == 0, "every knob names a declared parameter");
+
+        /* child_names must be one per pad, or the grid labels slide. */
+        size_t cn = h.find("child_names");
+        int names = 0;
+        if (cn != std::string::npos) {
+            size_t e = h.find(']', cn);
+            int quotes = 0;
+            for (size_t q = cn; q < e; q++) if (h[q] == '"') quotes++;
+            /* find() lands INSIDE the key's quotes, so only its closing one
+             * is in the span — subtract that, not both. */
+            names = (quotes - 1) / 2;
+        }
+        okf(names == SIMIAN_PADS, "child_names has one entry per pad (%d)", names);
     }
 
     /* ================= module.json agreement ================= */
@@ -321,26 +379,27 @@ int main(void) {
         if (mj.empty()) {
             printf("  skip  src/module.json not readable from this cwd\n");
         } else {
-            std::string cp = get(api, inst, "chain_params");
-            /* The generator reproduces build_chain_params' output from the
-             * same tables; if that reproduction drifts, modulation targets go
-             * silently dead. Compare key by key. */
             int missing = 0;
-            for (int g = 0; g < GP_COUNT; g++) {
-                std::string pat = std::string("\"key\": \"") + GLOBAL_PARAMS[g].key + "\"";
-                if (mj.find(pat) == std::string::npos) missing++;
-            }
+            for (int g = 0; g < GP_COUNT; g++)
+                if (mj.find(std::string("\"key\": \"") + GLOBAL_PARAMS[g].key + "\"") == std::string::npos)
+                    missing++;
+            for (int d = 0; d < SIMIAN_PADS; d++)
+                if (mj.find(std::string("\"key\": \"") + PADS[d].id + "_tune\"") == std::string::npos)
+                    missing++;
             for (int v = 0; v < SIMIAN_VOICES; v++)
                 for (int i = 0; i < VP_COUNT; i++) {
-                    std::string pat = std::string("\"key\": \"") + VOICES[v].id + "_" +
-                                      VOICE_PARAMS[i].key + "\"";
+                    std::string pat = std::string("\"key\": \"") + PADS[voice_owner_pad(v)].id +
+                                      "_" + VOICE_PARAMS[i].key + "\"";
                     if (mj.find(pat) == std::string::npos) missing++;
                 }
             okf(missing == 0, "module.json chain_params covers every key (%d missing)", missing);
+            int entries = 0;
+            for (size_t p = mj.find("\"key\":"); p != std::string::npos;
+                 p = mj.find("\"key\":", p + 1)) entries++;
+            okf(entries <= 256, "chain_params is inside MAX_CHAIN_PARAMS (%d)", entries);
             ok(mj.size() <= 65536, "module.json is inside the host's 64 KB limit");
             ok(mj.find("\"ui_hierarchy\"") != std::string::npos,
                "module.json carries an inline ui_hierarchy");
-            (void)cp;
         }
     }
 
@@ -348,13 +407,36 @@ int main(void) {
     printf("\naudio:\n");
     api->set_param(inst, "preset", "0");
     ok(render_peak(api, inst, 200) < 0.001f, "silent with nothing played");
-    note_on(api, inst, 36, 100);
-    float kick = render_peak(api, inst, 400);
-    okf(kick > 0.01f, "a kick makes a sound (peak %.3f)", kick);
 
-    /* The whole reason for the forced edge: two hits in a row must both
-     * sound, even when nothing renders between the note-off and the next
-     * note-on. */
+    /* Every one of the sixteen pads sounds — the thing upstream's two
+     * choke-only notes got wrong on a grid. */
+    {
+        int silent = 0;
+        for (int d = 0; d < SIMIAN_PADS; d++) {
+            render_peak(api, inst, 2500);              /* let the last one decay */
+            note_on(api, inst, PADS[d].note, 110);
+            float pk = render_peak(api, inst, 300);
+            if (pk <= 0.005f) {
+                printf("        %s (note %d) is silent\n", PADS[d].label, PADS[d].note);
+                silent++;
+            }
+        }
+        ok(silent == 0, "all sixteen pads make a sound");
+    }
+
+    /* A pad's Tune must actually reach the pitch. */
+    {
+        render_peak(api, inst, 2500);
+        api->set_param(inst, "pad4_tune", "0");
+        note_on(api, inst, 39, 110);
+        float a = render_peak(api, inst, 300);
+        render_peak(api, inst, 2500);
+        api->set_param(inst, "pad4_tune", "12");
+        note_on(api, inst, 39, 110);
+        float b = render_peak(api, inst, 300);
+        okf(fabsf(a - b) > 0.0005f, "Tune changes what the pad plays (%.4f vs %.4f)", a, b);
+    }
+
     {
         note_on(api, inst, 36, 100);
         render_peak(api, inst, 400);
@@ -362,8 +444,6 @@ int main(void) {
         float second = render_peak(api, inst, 50);
         okf(second > 0.01f, "a repeated note retriggers (peak %.3f)", second);
     }
-
-    /* Velocity has to reach the envelope, or the kit plays flat. */
     {
         note_on(api, inst, 36, 127);
         float loud = render_peak(api, inst, 400);
@@ -371,8 +451,6 @@ int main(void) {
         float soft = render_peak(api, inst, 400);
         okf(soft < loud, "velocity changes level (%.3f soft vs %.3f loud)", soft, loud);
     }
-
-    /* Silence tracking: a voice that has decayed stops being computed. */
     {
         note_on(api, inst, 36, 100);
         render_peak(api, inst, 50);
@@ -381,23 +459,40 @@ int main(void) {
         ok(!S->voice[V_KICK].active, "a decayed voice goes inactive and stops costing CPU");
     }
 
-    /* Choke: the closed hat silences the open one. */
+    /* Chokes follow Move's groups: the three hats silence each other. */
     {
-        api->set_param(inst, "voice8_decay", "2000");   /* HH Open, long */
+        render_peak(api, inst, 3000);
+        api->set_param(inst, "pad11_decay", "2000");    /* HH Open, long */
         note_on(api, inst, 46, 120);
         render_peak(api, inst, 100);
         float ringing = render_peak(api, inst, 50);
-        note_on(api, inst, 42, 1);                      /* HH Closed, quietest */
-        api->set_param(inst, "voice6_volume", "-60");   /* …and inaudible */
+        api->set_param(inst, "pad7_volume", "-60");     /* closed hat, inaudible */
+        note_on(api, inst, 42, 1);
         float after = render_peak(api, inst, 60);
         okf(after < ringing, "a closed hat chokes the open one (%.3f -> %.3f)", ringing, after);
     }
-
-    /* An unmapped note is not ours. */
+    {
+        /* …and so does the SECOND closed hat, which is the alias. */
+        render_peak(api, inst, 3000);
+        note_on(api, inst, 46, 120);
+        render_peak(api, inst, 100);
+        float ringing = render_peak(api, inst, 50);
+        note_on(api, inst, 43, 1);
+        float after = render_peak(api, inst, 60);
+        okf(after < ringing, "the alias hat chokes the open one too (%.3f -> %.3f)", ringing, after);
+    }
+    {
+        /* A pad must never choke its own voice — that would cut the hit. */
+        render_peak(api, inst, 3000);
+        api->set_param(inst, "pad7_volume", "0");
+        note_on(api, inst, 42, 120);
+        float pk = render_peak(api, inst, 200);
+        okf(pk > 0.005f, "a hat does not choke ITSELF (peak %.3f)", pk);
+    }
     {
         render_peak(api, inst, 3000);
         note_on(api, inst, 60, 127);
-        ok(render_peak(api, inst, 200) < 0.001f, "a note outside the map plays nothing");
+        ok(render_peak(api, inst, 200) < 0.001f, "a note outside 36..51 plays nothing");
     }
 
     /* ================= split render ================= */
@@ -406,13 +501,11 @@ int main(void) {
         const int frames = 128;
         std::vector<int16_t> bus(frames * 2), main(frames * 2);
         int16_t *vo[SIMIAN_VOICES];
-        /* Kick on its own bus; everything else on main, which is how the host
-         * hands it over — an unrouted voice gets the main buffer. */
         for (int v = 0; v < SIMIAN_VOICES; v++) vo[v] = main.data();
         vo[V_KICK] = bus.data();
 
         api->set_param(inst, "preset", "0");
-        render_peak(api, inst, 3000);                   /* settle */
+        render_peak(api, inst, 3000);
         note_on(api, inst, 36, 120);
 
         float bus_peak = 0, main_peak = 0;
@@ -426,21 +519,23 @@ int main(void) {
             }
         }
         okf(bus_peak > 0.01f, "a routed voice lands in its own buffer (peak %.3f)", bus_peak);
-        okf(main_peak < bus_peak,
-            "…and not in main (main %.3f vs bus %.3f)", main_peak, bus_peak);
+        okf(main_peak < bus_peak, "…and not in main (main %.3f vs bus %.3f)", main_peak, bus_peak);
 
-        /* A voice with no bus is handed main_out, and must still be heard. */
-        for (int v = 0; v < SIMIAN_VOICES; v++) vo[v] = main.data();
-        note_on(api, inst, 38, 120);
-        float m2 = 0;
+        /* BOTH pads of a pair follow the voice onto its bus — one DSP, so
+         * there is nothing to route separately. */
+        render_peak(api, inst, 3000);
+        vo[V_SNARE] = bus.data();
+        note_on(api, inst, 39, 120);                 /* the ALIAS pad */
+        float alias_bus = 0;
         for (int b = 0; b < 40; b++) {
+            std::fill(bus.begin(), bus.end(), 0);
             std::fill(main.begin(), main.end(), 0);
             move_plugin_render_split(inst, vo, SIMIAN_VOICES, main.data(), frames);
             for (int i = 0; i < frames * 2; i++) {
-                float m = fabsf(main[i] / 32768.0f); if (m > m2) m2 = m;
+                float a = fabsf(bus[i] / 32768.0f); if (a > alias_bus) alias_bus = a;
             }
         }
-        okf(m2 > 0.01f, "an unrouted voice still reaches main_out (peak %.3f)", m2);
+        okf(alias_bus > 0.01f, "an alias pad rides its parent's bus (peak %.3f)", alias_bus);
     }
 
     /* ================= focus following ================= */
@@ -448,56 +543,48 @@ int main(void) {
     {
         void *f = api->create_instance(".", NULL);
         simian_t *F = (simian_t *)f;
-        /* No host has vouched and nothing is sequencing: a bare note is a hand. */
         note_on(api, f, 38, 100);
-        ok(F->ui_current_voice == V_SNARE, "with no vouching host, a bare note moves focus");
+        ok(F->ui_current_pad == note_to_pad(38), "with no vouching host, a bare note moves focus");
 
-        /* A vouch arriving FIRST arms, and the next note claims it. This is
-         * also what makes the host a VOUCHING host from here on, which is why
-         * it comes before the late-vouch case: after it, a bare note no
-         * longer moves focus by itself and the correlation is what is left. */
-        F->ui_current_voice = 0;
+        /* An alias must focus ITS OWN pad, not its parent's — otherwise its
+         * Tune knob is unreachable from the grid. */
+        note_on(api, f, 39, 100);
+        ok(F->ui_current_pad == note_to_pad(39), "an alias pad focuses itself, not its parent");
+
+        F->ui_current_pad = 0;
         api->set_param(f, "ui_live_press", "1");
         note_on(api, f, 49, 100);
-        ok(F->ui_current_voice == V_CYMBAL, "an early vouch is claimed by the next note");
+        ok(F->ui_current_pad == note_to_pad(49), "an early vouch is claimed by the next note");
 
-        /* A vouch arriving AFTER the note claims the note it belongs to —
-         * the usual order, since the note comes straight off MIDI and the
-         * vouch crosses a process boundary. */
         note_on(api, f, 42, 100);
-        ok(F->ui_current_voice == V_CYMBAL,
+        ok(F->ui_current_pad == note_to_pad(49),
            "a bare note alone does not move focus once a host vouches");
         api->set_param(f, "ui_live_press", "1");
-        ok(F->ui_current_voice == V_HHCLOSED, "a late vouch matches the note just played");
+        ok(F->ui_current_pad == note_to_pad(42), "a late vouch matches the note just played");
 
-        /* A host that names the note needs no correlation at all. */
-        F->ui_current_voice = 0;
+        F->ui_current_pad = 0;
         api->set_param(f, "ui_live_note", "41");
-        ok(F->ui_current_voice == V_LOWTOM, "ui_live_note names the voice outright");
+        ok(F->ui_current_pad == note_to_pad(41), "ui_live_note names the pad outright");
         api->set_param(f, "ui_live_note", "60");
-        ok(F->ui_current_voice == V_LOWTOM, "an unmapped ui_live_note moves nothing");
+        ok(F->ui_current_pad == note_to_pad(41), "an unmapped ui_live_note moves nothing");
 
-        /* ⚠ DR32's bug, tested so it cannot come back: once a host has
-         * vouched, bare-note following must come BACK after the vouching
-         * stops, or pad-follow works and then silently dies. */
-        F->ui_current_voice = 0;
+        /* ⚠ DR32's bug, tested so it cannot come back. */
+        F->ui_current_pad = 0;
         F->block += SIMIAN_VOUCH_TTL_BLOCKS + 1;
-        note_on(api, f, 39, 100);
-        ok(F->ui_current_voice == V_CLAP,
+        note_on(api, f, 40, 100);
+        ok(F->ui_current_pad == note_to_pad(40),
            "a host that has gone quiet stops suppressing bare-note follow");
 
         api->destroy_instance(f);
     }
 
-    /* The hierarchy the DSP actually SERVES, for tools/pages_check.mjs to run
-     * upstream's own validator and voice resolver over. The host plans every
-     * page from this text, never from module.json, so this is the input that
-     * matters. */
+    /* The hierarchy the DSP actually SERVES, for tools/pages_check.mjs. */
     {
         std::string h = get(api, inst, "ui_hierarchy");
         system("mkdir -p dist/tests");
         FILE *f = fopen("dist/tests/served_hierarchy.json", "wb");
-        if (f) { fwrite(h.data(), 1, h.size(), f); fclose(f); printf("\nwrote dist/tests/served_hierarchy.json\n"); }
+        if (f) { fwrite(h.data(), 1, h.size(), f); fclose(f);
+                 printf("\nwrote dist/tests/served_hierarchy.json\n"); }
         else   { printf("\nWARNING: could not write dist/tests/served_hierarchy.json\n"); }
     }
 

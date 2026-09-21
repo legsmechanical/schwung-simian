@@ -46,10 +46,10 @@ static void play_two_bars(void) {
         { 4, 38, 110}, { 4, 42,  70},
         { 6, 42,  50}, { 7, 36,  80},
         { 8, 36, 112}, { 8, 42,  70},
-        {10, 42,  50}, {10, 37,  60},
+        {10, 43,  50}, {10, 37,  60},   /* 43 = the second closed hat */
         {12, 38, 110}, {12, 42,  70},
         {14, 46,  90},
-        {15, 39,  75},
+        {15, 40,  75},   /* 40 is the Clap in this seating */
     };
     const int STEPS = 16, STEP_MS = 125;
     for (int bar = 0; bar < 2; bar++)
