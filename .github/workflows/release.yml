@@ -51,6 +51,15 @@ jobs:
           docker run --rm -v "$PWD":/work -w /work debian:bookworm bash -c '
             apt-get -qq update >/dev/null && apt-get -qq install -y g++ nodejs >/dev/null
             ./scripts/test.sh'
+          # ⚠⚠ GIVE THE TREE BACK. The container above must run as root — it
+          #    apt-gets a compiler — so everything the suite creates
+          #    (build/, and dist/tests/ from the served-hierarchy dump) comes
+          #    back ROOT-OWNED. scripts/build.sh then runs its own container
+          #    as the runner's uid and dies on
+          #    "mkdir: cannot create directory 'dist/simian': Permission
+          #    denied", three steps later and nowhere near the cause.
+          #    v0.1.0's first attempt failed exactly here.
+          sudo chown -R "$(id -u):$(id -g)" .
 
       # ⚠⚠ THE GENERATED FILES MUST ALREADY BE COMMITTED AND CURRENT.
       #    scripts/test.sh and scripts/build.sh both regenerate src/module.json
