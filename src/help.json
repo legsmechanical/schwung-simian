@@ -1,0 +1,249 @@
+{
+  "title": "SIMIAN",
+  "children": [
+    {
+      "title": "Overview",
+      "lines": [
+        "A ten-voice drum",
+        "synth. No samples:",
+        "every sound is built",
+        "from an oscillator,",
+        "noise and a click.",
+        "",
+        "One envelope drags",
+        "pitch and filter",
+        "down as it falls.",
+        "That fall is the",
+        "drum.",
+        "",
+        "Ported from OneTrick",
+        "SIMIAN 2 by Punk",
+        "Labs. GPL-3."
+      ]
+    },
+    {
+      "title": "Pads",
+      "children": [
+        {
+          "title": "The layout",
+          "lines": [
+            "16 pads, 10 drums.",
+            "",
+            "48 TomH* 49 Crash",
+            "50 Crash* 51 TomM*",
+            "44 TomH  45 TomL*",
+            "46 OpHat 47 TomM",
+            "40 Clap  41 TomL",
+            "42 ClHat 43 ClHat*",
+            "36 Kick  37 Rim",
+            "38 Snare 39 Snare*",
+            "",
+            "* = a second pad on",
+            "a drum another pad",
+            "already owns."
+          ]
+        },
+        {
+          "title": "Linked pads",
+          "lines": [
+            "Six pads share a",
+            "drum with the pad",
+            "beside them. The",
+            "screen shows a link",
+            "under the name.",
+            "",
+            "They share every",
+            "control EXCEPT Tune.",
+            "Turn Snare's Decay",
+            "and both pads move:",
+            "there is one snare.",
+            "",
+            "Tune is what makes",
+            "the second pad worth",
+            "having. It is the",
+            "2nd knob on Tone."
+          ]
+        },
+        {
+          "title": "Chokes",
+          "lines": [
+            "The three hats cut",
+            "each other off, and",
+            "so do the two",
+            "cymbals.",
+            "",
+            "A pad never chokes",
+            "itself. Hitting one",
+            "drum twice just",
+            "retriggers it."
+          ]
+        },
+        {
+          "title": "Not GM notes",
+          "lines": [
+            "The layout follows",
+            "Move's own drum",
+            "racks, not General",
+            "MIDI.",
+            "",
+            "A GM drum loop from",
+            "elsewhere will play",
+            "the wrong drums."
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Tone page",
+      "lines": [
+        "Tune   this PAD's",
+        "       offset, +-24",
+        "Pitch  30Hz - 4.4k",
+        "Wave   triangle to",
+        "       cymbal, a",
+        "       crossfade",
+        "Bend   envelope to",
+        "       pitch, +-36",
+        "BendDyn how much of",
+        "       that is",
+        "       velocity",
+        "Decay  10ms - 2s",
+        "Punch  envelope",
+        "       shape, not",
+        "       length",
+        "",
+        "A soft hit always",
+        "decays quicker: the",
+        "lightest is 30% of",
+        "the time you set."
+      ]
+    },
+    {
+      "title": "Noise page",
+      "lines": [
+        "Cutoff 440Hz - 15k",
+        "Res    emphasis, up",
+        "       to about Q2",
+        "LPBend envelope to",
+        "       cutoff",
+        "LPDyn  velocity over",
+        "       that sweep",
+        "Tone/Nse crossfade,",
+        "       osc to noise",
+        "Click  a transient",
+        "       over the",
+        "       attack",
+        "",
+        "Tone/Nse is the most",
+        "defining knob here.",
+        "Low is a kick, mid a",
+        "snare, high a hat.",
+        "",
+        "Click is the stick.",
+        "It is most of what",
+        "makes a quiet drum",
+        "audible in a mix."
+      ]
+    },
+    {
+      "title": "Mix page",
+      "lines": [
+        "Volume -60 to +6 dB",
+        "Pan",
+        "VelVol how much",
+        "       velocity sets",
+        "       the level",
+        "Sat    on this drum",
+        "       alone",
+        "Reverb send to the",
+        "       built-in verb",
+        "SendA  host return",
+        "SendB  host return"
+      ]
+    },
+    {
+      "title": "Master page",
+      "lines": [
+        "Gain   output level",
+        "Drive  into the",
+        "       limiter, -6",
+        "       by default",
+        "Sat    across the",
+        "       whole mix",
+        "RevSize verb decay",
+        "RevGate a threshold.",
+        "       -100 is never",
+        "       gated. Raise",
+        "       it for the",
+        "       gated snare.",
+        "VelSens 0 plays flat",
+        "Transpose +-12"
+      ]
+    },
+    {
+      "title": "Performance",
+      "lines": [
+        "Mod wheel sweeps",
+        "every drum's cutoff",
+        "down up to 32",
+        "semitones. A DJ",
+        "filter over the kit.",
+        "",
+        "Pitch wheel scales",
+        "every decay, 20% to",
+        "180%. A staccato",
+        "control, not a bend.",
+        "It is not saved."
+      ]
+    },
+    {
+      "title": "Kits",
+      "lines": [
+        "35 factory kits on",
+        "the Kit page, all",
+        "from OneTrick",
+        "SIMIAN 2.",
+        "",
+        "They are only",
+        "parameter sets, so",
+        "anything you hear",
+        "you can reach and",
+        "change.",
+        "",
+        "Kit 0, Basic, is the",
+        "init kit."
+      ]
+    },
+    {
+      "title": "Buses & sends",
+      "lines": [
+        "Each of the ten",
+        "drums can take its",
+        "own bus, and each",
+        "has Send A and B",
+        "into the returns.",
+        "",
+        "Both pads of a pair",
+        "follow one drum onto",
+        "one bus.",
+        "",
+        "WARNING: a drum on a",
+        "bus leaves BEFORE",
+        "Master. It keeps its",
+        "own Volume, Pan and",
+        "Sat but not the",
+        "global Drive, Sat,",
+        "limiter or Gain.",
+        "",
+        "Expect it to get",
+        "louder, about 4dB at",
+        "the default Drive.",
+        "",
+        "Shared glue over",
+        "routed drums belongs",
+        "in the bus, not on",
+        "Master."
+      ]
+    }
+  ]
+}

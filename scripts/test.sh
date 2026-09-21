@@ -25,4 +25,9 @@ CXX_BIN="${CXX:-c++}"
 # them. A drift here draws the wrong drum and nothing else notices.
 if command -v node >/dev/null 2>&1; then
     node tests/widget.test.mjs
+    # help.json lines are DRAWN, never wrapped and never truncated — an
+    # over-long one loses its tail silently. This measures against the host's
+    # own font table and SKIPS (passing) without a host checkout, so run it
+    # before tagging, not only in CI.
+    node tools/check_help.mjs
 fi

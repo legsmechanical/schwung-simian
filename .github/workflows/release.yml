@@ -1,0 +1,141 @@
+# Tag -> tested build -> GitHub release -> release.json.
+#
+# ⭑ Schwung Manager reads release.json ON THE DEFAULT BRANCH, not the GitHub
+#   releases API, so the last step is not bookkeeping: without it the catalog
+#   cannot see a new version at all.
+#
+# ⚠ The default branch here is `main`, and a catalog entry for this module
+#   must say `"default_branch": "main"`. Both have to agree.
+#
+# ⚠ The asset is named from the MODULE ID (`simian-module.tar.gz`), not the
+#   repo name (`schwung-simian`). scripts/build.sh already produces exactly
+#   that file, and the catalog's `asset_name` must match it byte for byte.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # A tag that does not pass its own suite must not become a release.
+      #
+      # ⚠⚠ RUN IN debian:bookworm, NOT ON THE BARE RUNNER. The distro chooses
+      #    the compiler's defaults, and they differ in ways that are errors
+      #    rather than warnings — Ubuntu turns on _FORTIFY_SOURCE at -O2 and
+      #    Debian does not. DR32's first two release attempts died exactly
+      #    here, on errors no local run could produce. Pinning the image to
+      #    the one scripts/Dockerfile builds from is what makes "green
+      #    locally" and "green in CI" the same sentence.
+      #
+      # ⚠ check_help SKIPS here — it measures against the HOST's font table
+      #   and there is no host checkout on the runner — and a skip counts as a
+      #   pass. Run it locally before tagging.
+      - name: Test
+        run: |
+          docker run --rm -v "$PWD":/work -w /work debian:bookworm bash -c '
+            apt-get -qq update >/dev/null && apt-get -qq install -y g++ nodejs >/dev/null
+            ./scripts/test.sh'
+
+      # ⚠⚠ THE GENERATED FILES MUST ALREADY BE COMMITTED AND CURRENT.
+      #    scripts/test.sh and scripts/build.sh both regenerate src/module.json
+      #    and src/dsp/factory_bank.h, so CI would happily ship a build that
+      #    nobody has ever run locally and that does not match the repo. A
+      #    release whose source and artifact disagree is unbisectable later.
+      - name: Generated files are in step with the source
+        run: |
+          set -eu
+          git diff --quiet -- src/module.json src/dsp/factory_bank.h || {
+            echo "ERROR: regenerating changed a committed file. Run ./scripts/test.sh and commit:" >&2
+            git --no-pager diff --stat -- src/module.json src/dsp/factory_bank.h >&2
+            exit 1; }
+
+      - name: Build
+        run: ./scripts/build.sh
+
+      - name: Verify the artifact
+        run: |
+          set -eu
+          test -f dist/simian-module.tar.gz
+          tar tzf dist/simian-module.tar.gz
+          # canvas.js is in this list on purpose: without it the custom Voice
+          # widget never registers and the cell silently falls back to a bare
+          # number — a shipped module that looks correct and is not.
+          for f in simian/module.json simian/dsp.so simian/ui.js simian/canvas.js simian/help.json; do
+            tar tzf dist/simian-module.tar.gz | grep -qx "$f" || {
+              echo "ERROR: $f missing from the tarball" >&2; exit 1; }
+          done
+          # The tag and the shipped module.json must agree, or the catalog
+          # offers an update that installs a different version than it claims.
+          want="${GITHUB_REF_NAME#v}"
+          got=$(node -e 'console.log(require("./src/module.json").version)')
+          [ "$want" = "$got" ] || {
+            echo "ERROR: tag is $GITHUB_REF_NAME but src/module.json says $got" >&2; exit 1; }
+
+      # ⚠ THE NOTES ARE THE TAG'S OWN ANNOTATION, NOT `generate_release_notes`.
+      #   That setting produces a compare link and nothing else — a reader has
+      #   to go read commits to find out what changed, which is the opposite
+      #   of what a release note is for. Fail on a bare tag rather than
+      #   publishing an empty release.
+      - name: Release notes from the tag
+        run: |
+          set -eu
+          git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > /tmp/notes.md
+          if [ ! -s /tmp/notes.md ]; then
+            echo "ERROR: $GITHUB_REF_NAME has no annotation — tag with 'git tag -a' and describe the change" >&2
+            exit 1
+          fi
+          cat /tmp/notes.md
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/simian-module.tar.gz
+          body_path: /tmp/notes.md
+
+      # ⚠ IN A FRESH CLONE, NOT THIS WORKING TREE. The build runs in Docker as
+      #   root and leaves root-owned objects behind; `build/` and `dist/` are
+      #   gitignored here so a checkout would survive it, but a separate clone
+      #   cannot be poisoned by anything the build did at all. DR32 learned
+      #   this the expensive way: the push failed AFTER the release had been
+      #   published, which is the worst place to fail — the release exists and
+      #   the catalog still cannot see it.
+      - name: Point release.json at it
+        run: |
+          set -eu
+          VERSION="${GITHUB_REF_NAME#v}"
+          git clone --depth 1 --branch main \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" /tmp/pub
+          cd /tmp/pub
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # name/description are carried through: Schwung Manager reads version
+          # and download_url, but the catalog listing shows the rest.
+          node -e '
+            const fs = require("fs");
+            const r = JSON.parse(fs.readFileSync("release.json", "utf8"));
+            r.version = process.env.VERSION;
+            r.download_url = `https://github.com/${process.env.GITHUB_REPOSITORY}/releases/download/${process.env.GITHUB_REF_NAME}/simian-module.tar.gz`;
+            fs.writeFileSync("release.json", JSON.stringify(r, null, 2) + "\n");
+          '
+          git add release.json
+          git commit -m "chore: release.json for ${GITHUB_REF_NAME}" || { echo "release.json already current"; exit 0; }
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ github.ref_name }}

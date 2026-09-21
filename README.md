@@ -13,6 +13,15 @@ pitch and filter down as it falls. A kick and a hi-hat are the same synth with
 different numbers, which is why a whole kit here is 190 values and no audio
 files.
 
+That recipe — a tuned oscillator yanked downward by its own envelope, mixed
+against filtered noise — is the sound of early-80s electronic drums, the
+hexagonal-pad era that **Simmons** made the sound of a decade. It is why the
+toms are the fun part: wind **Bend** up on a low **Pitch** and you are
+somewhere in 1983 within one knob. Nothing here is modelled on a specific
+machine, and Punk Labs make no such claim; it is that *architecture*, built
+honestly, with modern range on every control. Pull Bend back to zero and the
+same voice is a perfectly straight modern kick.
+
 ---
 
 ## Playing it
@@ -157,6 +166,8 @@ notice:
 
 **GPL-3.0-or-later.** The DSP, the factory kits and `original source/` are
 Copyright (c) 2024 Punk Labs LLC. The cymbal sample is by Kevin Hall, CC0 (see
-`src/dsp/faust/samples/LICENSE.txt`). See `LICENSE` and `NOTICES.txt`.
+`src/dsp/faust/samples/LICENSE.txt`). The wrapper, widget and tooling are
+Copyright (c) 2026 Josh Gaines / legsmechanical, same licence. Full breakdown
+of what is and is not in the binary: [`NOTICES.md`](NOTICES.md).
 
 Building, testing and the porting notes: [`docs/DEVELOPING.md`](docs/DEVELOPING.md).

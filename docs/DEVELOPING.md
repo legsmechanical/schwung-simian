@@ -104,13 +104,60 @@ resolver over the hierarchy the DSP actually serves (written to
 map declared on a second level — which renders perfectly and publishes three
 copies of the rack.
 
-## Before a release
+## Cutting a release
 
-- `NOTICES.txt` is upstream's **Rust dependency** list and describes a build
-  this port does not do.
-- `LICENSE` carries only Punk Labs' copyright line.
-- No `help.json` yet.
-- Open design question: a drum routed to a bus leaves pre-master and jumps
-  about 4 dB (README, "Routing"). The options are internal inserts, a bus per
-  voice with the glue duplicated, or pulling the master stage out into its own
-  `audio_fx` — the DR32 → Bus Driver move.
+`.github/workflows/release.yml` does it on an annotated tag:
+
+```sh
+./scripts/test.sh            # including check_help, which SKIPS in CI
+git tag -a v0.2.0 -m "what changed, in prose"
+git push && git push --tags
+```
+
+Tag → test in `debian:bookworm` → build → GitHub release → rewrite
+`release.json` on `main`. Four things it refuses rather than shipping:
+
+- a tag whose version disagrees with `src/module.json`
+- a tag with **no annotation** — the release notes ARE the tag message,
+  because `generate_release_notes` emits a compare link and nothing else
+- a tarball missing any of `module.json`, `dsp.so`, `ui.js`, **`canvas.js`**,
+  `help.json` — without `canvas.js` the Voice widget never registers and the
+  cell silently falls back to a bare number
+- a regenerated `module.json` or `factory_bank.h` that differs from what is
+  committed, which would ship a build nobody ran locally
+
+⭑ **Schwung Manager reads `release.json` on the DEFAULT BRANCH**, never the
+releases API — that last step is what makes a new version visible at all.
+
+### Catalog entry
+
+Not submitted. For `module-catalog.json` upstream:
+
+```json
+{
+  "id": "simian",
+  "name": "SIMIAN",
+  "component_type": "sound_generator",
+  "github_repo": "legsmechanical/schwung-simian",
+  "default_branch": "main",
+  "asset_name": "simian-module.tar.gz",
+  "min_host_version": "1.3.0"
+}
+```
+
+**1.3.0** is where module buses, `voice_send_params` and
+`move_plugin_render_split` first shipped; the custom widget needs only 1.2.0,
+so the buses set the floor. Same floor DR32 declares.
+
+🔴 **The repo is PRIVATE, and that blocks a real release.** A `download_url`
+on a private repo is not fetchable by Schwung Manager, the catalog needs a
+public `github_repo`, and GPL-3.0 means the corresponding source has to reach
+anyone who gets the binary. Going public is a prerequisite, not a formality —
+and it is Josh's call.
+
+## Open design question
+
+A drum routed to a bus leaves pre-master and jumps about 4 dB (README,
+"Routing"). The options are internal inserts, a bus per voice with the glue
+duplicated, or pulling the master stage out into its own `audio_fx` — the
+DR32 → Bus Driver move. Parked until device time.
