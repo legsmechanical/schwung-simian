@@ -170,11 +170,12 @@ globalThis.canvas_overlay = {
 
         /* THE NAME DOES NOT MOVE. It sits at the same y whether or not the
          * pad is linked, so stepping along the row reads as one line of text
-         * with a mark appearing over it — not as a layout that jumps. At 3
-         * rows for the mark, a blank row under it and 8 for the name, that
-         * costs 12 of the 15 and everything fits without shuffling. */
-        const ty = Math.max(LINK_H + 1, (h - TEXT_H + 1) >> 1);
-        if (linked) blit(ctx, LINK_RUNS, (w - LINK_W) >> 1, 0, 1);
-        drawText(ctx, name, tx, ty, 1);
+         * with a mark appearing under it — not as a layout that jumps.
+         *
+         * Name 8 rows (7 caps plus the descender 'p' needs), a blank row,
+         * then the 3-row mark: 12 of the 15, sitting two rows down so the
+         * text is not jammed against the top of the box. */
+        drawText(ctx, name, tx, 2, 1);
+        if (linked) blit(ctx, LINK_RUNS, (w - LINK_W) >> 1, h - 4, 1);
     },
 };
